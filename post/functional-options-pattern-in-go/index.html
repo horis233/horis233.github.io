@@ -1,24 +1,103 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://horis233.github.io</id>
-    <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-06T02:37:31.881Z</updated>
-    <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://horis233.github.io"/>
-    <link rel="self" href="https://horis233.github.io/atom.xml"/>
-    <subtitle>Why’s THE Design</subtitle>
-    <logo>https://horis233.github.io/images/avatar.png</logo>
-    <icon>https://horis233.github.io/favicon.ico</icon>
-    <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
-    <entry>
-        <title type="html"><![CDATA[Functional Options Pattern in Go]]></title>
-        <id>https://horis233.github.io/post/functional-options-pattern-in-go/</id>
-        <link href="https://horis233.github.io/post/functional-options-pattern-in-go/">
-        </link>
-        <updated>2020-04-03T13:43:20.000Z</updated>
-        <summary type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://horis233.github.io/post-images/1586138386793.jpg" alt="" loading="lazy"></figure>
-]]></summary>
-        <content type="html"><![CDATA[<figure data-type="image" tabindex="1"><img src="https://horis233.github.io/post-images/1586138386793.jpg" alt="" loading="lazy"></figure>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Functional Options Pattern in Go | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://horis233.github.io/favicon.ico?v=1586140640391">
+<link rel="stylesheet" href="https://horis233.github.io/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="
+
+
+reference functional-options-pattern-in-go
+
+One of the many issues you'll encounter as a Golang developer is trying t..." />
+    <meta name="keywords" content="go,golang design patten" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://horis233.github.io">
+        <img src="https://horis233.github.io/images/avatar.png?v=1586140640391" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://horis233.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Functional Options Pattern in Go</h2>
+            <div class="post-date">2020-04-03</div>
+            
+            <div class="post-content" v-pre>
+              <figure data-type="image" tabindex="1"><img src="https://horis233.github.io/post-images/1586138386793.jpg" alt="" loading="lazy"></figure>
 <!-- more -->
 <blockquote>
 <p>reference <a href="https://halls-of-valhalla.org/beta/articles/functional-options-pattern-in-go,54/">functional-options-pattern-in-go</a></p>
@@ -212,6 +291,49 @@ func (c stuffClient) DoStuff() error {
 </code></pre>
 <p>Try it out <a href="https://play.golang.org/p/Z5P5Om4KDL">here</a>. In the case of our example, where we're just applying the config directly to our struct, it makes no sense to have an extra config struct in the middle. However, note that in many cases you may still want to use the config struct from the previous example; for instance, if your constructor is using the config options to perform some operations but then not storing them into the struct, or if they get passed around to other places. The config struct variant is the more generic implementation.</p>
 <p>Credit to <a href="https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html">Rob Pike</a> and <a href="https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis">Dave Cheney</a> for popularizing this design pattern.</p>
-]]></content>
-    </entry>
-</feed>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://horis233.github.io/tag/Q8My0s1p7/" class="tag">
+                    go
+                  </a>
+                
+                  <a href="https://horis233.github.io/tag/8-jqKxvEP/" class="tag">
+                    golang design patten
+                  </a>
+                
+              </div>
+            
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
