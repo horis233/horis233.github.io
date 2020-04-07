@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-06T13:33:45.631Z</updated>
+    <updated>2020-04-07T01:11:16.199Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -11,11 +11,115 @@
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
     <entry>
+        <title type="html"><![CDATA[Kubernetes question -- day1]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-question-day1/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-question-day1/">
+        </link>
+        <updated>2020-04-06T12:52:09.000Z</updated>
+        <content type="html"><![CDATA[<p>Today's question:</p>
+<p>Which of the following <code>Daemonset</code> yaml are correct:</p>
+<p>A.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: default
+  labels: k8s-app: fluentd-logging 
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata:
+      labels:
+        name: fluentd-elasticsearch
+    spec:
+      containers:
+      - name: fluentd-elasticsearch
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1
+        restartPolicy: Never
+</code></pre>
+<p>B.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: default
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1 
+        restartPolicy: Onfailure
+</code></pre>
+<p>C.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1 
+kind: DaemonSet 
+metadata: 
+  name: fluentd-elasticsearch 
+  namespace: default 
+  labels: 
+    k8s-app: fluentd-logging 
+spec: 
+  selector: 
+    matchLabels: 
+      name: fluentd-elasticsearch 
+  template: 
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch 
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1 
+        restartPolicy: Always
+</code></pre>
+<p>D.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1 
+kind: DaemonSet 
+metadata: 
+  name: fluentd-elasticsearch 
+  namespace: default 
+  labels: 
+    k8s-app: fluentd-logging 
+spec: 
+  selector: 
+    matchLabels: 
+      name: fluentd-elasticsearch 
+  template: 
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch 
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1
+</code></pre>
+<h2 id="answer-c-and-d"><strong>Answer: C and D</strong></h2>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/</p>
+<figure data-type="image" tabindex="1"><img src="https://jiaming-hu.com/post-images/1586221558403.jpeg" alt="" loading="lazy"></figure>
+<p><code>RestartPolicy</code> field, optional values are <code>Always</code>, <code>OnFailure</code>, and <code>Never</code>. The default is Always. There can be multiple containers in a Pod, and restartPolicy applies to all containers in the Pod. The purpose of restartPolicy is to let kubelet restart the failed container.</p>
+<p>In addition, the <code>restartPolicy</code> of <code>Deployment</code> and <code>Statefulset</code> must also be <code>Always</code> to ensure that the pod exits abnormally, or the health check livenessProbe fails and the kubelet restarts the container.</p>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/deployment</p>
+<p><code>Job</code> and <code>CronJob</code> are pods that run once, and <code>restartPolicy</code> can only be <code>OnFailure</code> or <code>Never</code>, to ensure that the container will not restart after the execution is completed.</p>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion</p>
+]]></content>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[Functional Options Pattern in Go]]></title>
         <id>https://jiaming-hu.com/post/functional-options-pattern-in-go/</id>
         <link href="https://jiaming-hu.com/post/functional-options-pattern-in-go/">
         </link>
-        <updated>2020-04-02T01:43:20.000Z</updated>
+        <updated>2020-04-01T13:43:20.000Z</updated>
         <content type="html"><![CDATA[<!-- more -->
 <blockquote>
 <p>reference <a href="https://halls-of-valhalla.org/beta/articles/functional-options-pattern-in-go,54/">functional-options-pattern-in-go</a></p>

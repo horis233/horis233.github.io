@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes question -- day1 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586221871013">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Today's question:
+Which of the following Daemonset yaml are correct:
+A.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  ..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586221871013" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes question -- day1</h2>
+            <div class="post-date">2020-04-06</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-question-day1.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <p>Today's question:</p>
+<p>Which of the following <code>Daemonset</code> yaml are correct:</p>
+<p>A.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: default
+  labels: k8s-app: fluentd-logging 
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata:
+      labels:
+        name: fluentd-elasticsearch
+    spec:
+      containers:
+      - name: fluentd-elasticsearch
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1
+        restartPolicy: Never
+</code></pre>
+<p>B.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd-elasticsearch
+  namespace: default
+  labels:
+    k8s-app: fluentd-logging
+spec:
+  selector:
+    matchLabels:
+      name: fluentd-elasticsearch
+  template:
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1 
+        restartPolicy: Onfailure
+</code></pre>
+<p>C.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1 
+kind: DaemonSet 
+metadata: 
+  name: fluentd-elasticsearch 
+  namespace: default 
+  labels: 
+    k8s-app: fluentd-logging 
+spec: 
+  selector: 
+    matchLabels: 
+      name: fluentd-elasticsearch 
+  template: 
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch 
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1 
+        restartPolicy: Always
+</code></pre>
+<p>D.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1 
+kind: DaemonSet 
+metadata: 
+  name: fluentd-elasticsearch 
+  namespace: default 
+  labels: 
+    k8s-app: fluentd-logging 
+spec: 
+  selector: 
+    matchLabels: 
+      name: fluentd-elasticsearch 
+  template: 
+    metadata: 
+      labels: 
+        name: fluentd-elasticsearch 
+    spec: 
+      containers: 
+      - name: fluentd-elasticsearch 
+        image: gcr.io/fluentd-elasticsearch/fluentd:v2.5.1
+</code></pre>
+<h2 id="answer-c-and-d"><strong>Answer: C and D</strong></h2>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/</p>
+<figure data-type="image" tabindex="1"><img src="https://jiaming-hu.com/post-images/1586221558403.jpeg" alt="" loading="lazy"></figure>
+<p><code>RestartPolicy</code> field, optional values are <code>Always</code>, <code>OnFailure</code>, and <code>Never</code>. The default is Always. There can be multiple containers in a Pod, and restartPolicy applies to all containers in the Pod. The purpose of restartPolicy is to let kubelet restart the failed container.</p>
+<p>In addition, the <code>restartPolicy</code> of <code>Deployment</code> and <code>Statefulset</code> must also be <code>Always</code> to ensure that the pod exits abnormally, or the health check livenessProbe fails and the kubelet restarts the container.</p>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/deployment</p>
+<p><code>Job</code> and <code>CronJob</code> are pods that run once, and <code>restartPolicy</code> can only be <code>OnFailure</code> or <code>Never</code>, to ensure that the container will not restart after the execution is completed.</p>
+<p>https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/functional-options-pattern-in-go/">
+                  <h3 class="post-title">
+                    Functional Options Pattern in Go
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
