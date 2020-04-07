@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- day 2 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586270977278">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from th..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586270977278" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- day 2</h2>
+            <div class="post-date">2020-04-06</div>
+            
+            <div class="post-content" v-pre>
+              <p>Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from the pv being dynamically created to pv being used by pods?</p>
+<p>A.</p>
+<pre><code>PersistentVolumeController + CSI-Provisoner + CSI controller plugin
+</code></pre>
+<p>B.</p>
+<pre><code>AttachDetachController + CSI-Attacher + CSI controller plugin
+</code></pre>
+<p>C.</p>
+<pre><code>Kubelet + CSI node plugin
+</code></pre>
+<h2 id="answer-a-b-and-c">Answer: A, B and C</h2>
+<p>K8s uses <code>PVC</code> to describe the size of the persistent storage that Pod wants to use, read and write permissions, etc., which are generally created by developers; <code>PV</code> describes specific storage types, storage addresses, mounting directories, etc., generally by Ops personnel create. Instead of writing the volume information directly in the pod. First, it can make the development and operation and maintenance responsibilities clear. Second, the use of <code>PVC</code> and <code>PV</code> mechanisms can be well extended to support different storage implementations on the market, such as k8s v1.10 version for Local Persistent Volume.</p>
+<p>Let's try to understand the overall process from Pod creation to volume availability.</p>
+<p>The user submits a request to create a pod, and <code>PersistentVolumeController</code> finds that the pod claims to use <code>PVC</code>, and it will help it find a <code>PV</code> pair.</p>
+<p>If there is no ready-made <code>PV</code>, go to the corresponding <code>StorageClass</code>, help it create a new <code>PV</code>, and then complete the binding with <code>PVC</code>.</p>
+<p>The newly created <code>PV</code> is still just an API object, and it needs to undergo &quot;two-stage processing&quot; before it can be used as the &quot;persistent volume&quot; on the host machine:</p>
+<ul>
+<li>
+<p>In the first phase, <code>AttachDetachController</code> running on the master is responsible for attaching the <code>PV</code> and mounting the remote disk for the host;</p>
+</li>
+<li>
+<p>The second stage is to run inside the kubelet component on each node, mount the remote disk attached in the first step to the host directory. This control loop is called <code>VolumeManagerReconciler</code>, which runs on a separate Goroutine and does not block the kubelet main control loop.</p>
+</li>
+</ul>
+<p>After completing these two steps, the &quot;persistent volume&quot; corresponding to the PV is ready, and the POD can be started normally, and the &quot;persistent volume&quot; is mounted on the specified path in the container.</p>
+<p>k8s supports writing its own storage plug-in <code>FlexVolume</code> and <code>CSI</code>. Either way, you need to go through &quot;two-stage processing.&quot; FlexVolume has more limitations than CSI. Generally, we use <code>CSI</code> to dock storage.</p>
+<p>The design idea of ​​the <code>CSI</code> plug-in system strips this Provision stage (dynamically creating <code>PV</code>) and part of the storage management functions in Kubernetes from the main code to make it into several separate components. These components will monitor changes in storage-related events in Kubernetes, such as the creation of <code>PVC</code>, through the Watch API to perform specific storage management actions.</p>
+<figure data-type="image" tabindex="1"><img src="https://jiaming-hu.com/post-images/1586270614137.png" alt="" loading="lazy"></figure>
+<p>The three independent external components (External Components) in the CSI storage plug-in system in the above figure, namely: <code>Driver Registrar</code>, <code>External Provisioner</code> and <code>External Attacher</code>, correspond to some storage management functions stripped from the Kubernetes project.</p>
+<p>We need to implement a binary of Custom Components, which will provide three services in gRpc mode: <code>CSI Identity</code>, <code>CSI Controller</code>, and <code>CSI Node</code>.</p>
+<p><code>Driver Registrar</code> component, which is responsible for registering the plug-in in kubelet; <code>Driver Registrar</code> calls CSI Identity service to obtain plug-in information.</p>
+<p>The <code>External Provisioner</code> component listens to the PVC objects in the APIServer. When a PVC is created, it will call the CreateVolume method of the CSI Controller to create the corresponding PV;</p>
+<p>The <code>External Attacher</code> component is responsible for the Attach phase. The Mount phase is completed by the <code>VolumeManagerReconciler</code> control loop in the kubelet directly calling the CSI Node service.</p>
+<p>After the two stages are completed, kubelet passes the mount parameter to docker to create and start the container.</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-question-day1/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- day1
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
