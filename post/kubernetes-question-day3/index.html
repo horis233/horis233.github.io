@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Question -- day3 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586305185704">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx i..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586305185704" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Question -- day3</h2>
+            <div class="post-date">2020-04-07</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-question-day3.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
+<h2 id="answer">Answer</h2>
+<pre><code>[root@liabio ~]# kubectl run  cka-1120 --replicas 2 --expose=true --port=80 --image=nginx
+
+kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
+service/cka-1120 created
+deployment.apps/cka-1120 created
+
+[root@liabio ~]# kubectl get all | grep cka-1120
+pod/cka-1120-554b9c4798-7jcrb   1/1 Running 0118m
+pod/cka-1120-554b9c4798-fpjwj   1/1 Running 0118m
+service/cka-1120  ClusterIP 10.108.140.25 &lt;none&gt; 80/TCP           118m
+deployment.apps/cka-11202/222118m
+ 
+</code></pre>
+<p>The official website provides detailed kubectl usage, located under REFERENCE-&gt;kubectl CLI-&gt;kubectl Commands tab.<br>
+https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#run</p>
+<p>Command <code>kubectl run</code> will create a <code>deployment</code> or <code>job</code> to manage Pods. The command syntax is as follows:</p>
+<pre><code>kubectl run NAME --image=image [--env=&quot;key=value&quot;] [--port=port] [--replicas=replicas] [--dry-run=bool] [--overrides=inline-json] [--command] -- [COMMAND] [args...]
+</code></pre>
+<p>NAME specifies the name of deployment and service;</p>
+<p>--replicas abbreviation -r, specify the number of instances, the default is 1;</p>
+<p>--expose if true, will create a ClusterIP service, the default is false;</p>
+<p>--port indicates the port exposed by the container. If expose is true, the port is also the service port;</p>
+<p>--image specifies the image used by the container;</p>
+<p>--dry-run is true, only print the object to be sent, and not send it, the default is false.</p>
+<p>Create a deployment named cka-1120-01 with environment variables</p>
+<pre><code>kubectl run cka-1120-01 --image=nginx --env=&quot;DNS_DOMAIN=cluster.local&quot; --env=&quot;POD_NAMESPACE=default&quot;
+</code></pre>
+<p>Create a deployment named cka-1120-02 with label</p>
+<pre><code>kubectl run cka-1120-02 --image=nginx --labels=&quot;app=nginx,env=prod&quot;
+</code></pre>
+<p>There is also a <code>--restart</code> parameter, the default is Always, if set to OnFailure, the job will be created; if set to Never, the ordinary Pod will be created.</p>
+<pre><code>kubectl run cka-1120-03 --image=nginx --restart=OnFailure
+
+kubectl run --generator=job/v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
+job.batch/cka-1120-03 created
+</code></pre>
+<pre><code>kubectl run cka-1120-04 --image=nginx --restart=Never
+
+pod/cka-1120-04 created
+</code></pre>
+<p><code>--schedule</code> specifies the timing rule of cronjob, if this parameter is specified, cronjob will be created.</p>
+<pre><code>kubectl run pi --schedule=&quot;0/5 * * * ?&quot; --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle 'print bpi(2000)'
+
+cronjob.batch/pi created
+</code></pre>
+<p>Currently, it is not supported to directly create resource objects such as Statefulset and Daemonset.</p>
+<p><strong>What happens after kubectl run is executed?</strong></p>
+<p>https://github.com/kubernetes/kubernetes/blob/master/cmd/clicheck/check_cli_conventions.go</p>
+<pre><code>func main() {
+	var errorCount int
+
+	kubectl := cmd.NewKubectlCommand(os.Stdin, ioutil.Discard, ioutil.Discard)
+	errors := cmdsanity.RunCmdChecks(kubectl, cmdsanity.AllCmdChecks, []string{})
+	for _, err := range errors {
+		errorCount++
+		fmt.Fprintf(os.Stderr, &quot;     %d. %s\n&quot;, errorCount, err)
+	}
+</code></pre>
+<p><code>cmd.NewKubectlCommand</code> is to build <code>kubectl</code> and its sub-command line parameters. The final code to execute the business logic is under the &quot;pkg\kubectl&quot; package. Different subcommands: apply, run, create entry corresponding to &quot;pkg\kubectl\cmd&quot;<br>
+https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/pkg/cmd/run/run.go</p>
+<pre><code>func NewCmdRun(f cmdutil.Factory, streams genericclioptions.IOStreams) *cobra.Command {
+	o := NewRunOptions(streams)
+
+	cmd := &amp;cobra.Command{
+		Use:                   &quot;run NAME --image=image [--env=\&quot;key=value\&quot;] [--port=port] [--dry-run=server|client] [--overrides=inline-json] [--command] -- [COMMAND] [args...]&quot;,
+		DisableFlagsInUseLine: true,
+		Short:                 i18n.T(&quot;Run a particular image on the cluster&quot;),
+		Long:                  runLong,
+		Example:               runExample,
+		Run: func(cmd *cobra.Command, args []string) {
+			cmdutil.CheckErr(o.Complete(f, cmd))
+			cmdutil.CheckErr(o.Run(f, cmd, args))
+		},
+	}
+</code></pre>
+<p><code>o.Run(f, cmd, args)</code> will perform a series of checks on the parameters passed by kubectl run, filled with default values</p>
+<pre><code>	var createdObjects = []*RunObject{}
+	runObject, err := o.createGeneratedObject(f, cmd, generator, names, params, cmdutil.GetFlagString(cmd, &quot;overrides&quot;), namespace)
+	if err != nil {
+		return err
+	}
+	createdObjects = append(createdObjects, runObject)
+
+	allErrs := []error{}
+	if o.Expose {
+		serviceGenerator := cmdutil.GetFlagString(cmd, &quot;service-generator&quot;)
+		if len(serviceGenerator) == 0 {
+			return cmdutil.UsageErrorf(cmd, &quot;No service generator specified&quot;)
+		}
+		serviceRunObject, err := o.generateService(f, cmd, serviceGenerator, params, namespace)
+		if err != nil {
+			allErrs = append(allErrs, err)
+		} else {
+			createdObjects = append(createdObjects, serviceRunObject)
+		}
+	}
+</code></pre>
+<p><code>o.generateService</code> Generate deployment, cronjob, job, pod and other resource objects according to different generators, and send creation requests to apiserver.</p>
+<p>If expose is set to true, the same call o.createGeneratedObject is used to generate and create a service.</p>
+<pre><code>func (o *RunOptions) createGeneratedObject(f cmdutil.Factory, cmd *cobra.Command, generator generate.Generator, names []generate.GeneratorParam, params map[string]interface{}, overrides, namespace string) (*RunObject, error) {
+	err := generate.ValidateParams(names, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: Validate flag usage against selected generator. More tricky since --expose was added.
+	obj, err := generator.Generate(params)
+	if err != nil {
+		return nil, err
+	}
+</code></pre>
+<p><code>generator.Generate(params)</code> generates different resource objects according to different generator implementations.</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-2/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- day 2
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
