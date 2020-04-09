@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-08T00:19:49.391Z</updated>
+    <updated>2020-04-09T18:55:24.130Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -11,12 +11,125 @@
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Question -- day3]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day4]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-questions-day4/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-questions-day4/">
+        </link>
+        <updated>2020-04-09T06:19:39.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>Through the command line, use the nginx image to create a pod and manually schedule it to a node named node1121. The name of the pod is cka-1121. The best answer is attached. The command used to create the pod is the most streamlined yaml.<br>
+if the comment is there Restrictions, please list the points of attention, mainly need to list how to do manual scheduling?</p>
+<p>Note: Manual scheduling means that there is no need to go through kube-scheduler to schedule.</p>
+<h2 id="answer">Answer</h2>
+<p>Schedule the Pod named cka-1121 to node node 1121:</p>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: cka-1121
+  labels:
+    app: cka-1121
+spec:
+  containers:
+  - name: cka-1121
+    image: busybox
+    command: ['sh', '-c', 'echo Hello CKA! &amp;&amp; sleep 3600']
+  nodeName: node1121
+</code></pre>
+<p>Address of the scheduler in the official website:</p>
+<p>https://kubernetes.io/docs/concepts/scheduling/kube-scheduler/</p>
+<p>Scheduler command line parameters:</p>
+<p>https://kubernetes.io/docs/reference/command-line-tools-reference/kube-scheduler/</p>
+<p>The scheduler <code>kube-scheduler</code> is divided into <code>pre-selection</code>, <code>optimization</code>, <code>pod priority preemption</code>, and <code>bind</code> phase;</p>
+<p><code>Pre-selection</code>: Pop the pods that need to be scheduled from the queue of podQueue to be scheduled. Enter the pre-selection stage first. The pre-selection function determines whether each node is suitable for scheduling by the pod.</p>
+<p><code>Preferably</code>: select the optimal node from the satisfied nodes selected by the pre-selection.</p>
+<p><code>Pod priority preemption</code>: If the pre-selection and preferred scheduling fail, it will try to remove the pods with low priority and make the pods with high priority scheduled successfully.</p>
+<p><code>bind</code>: After the above steps are completed, the scheduler will update the local cache, but in the end, you need to submit the binding result to etcd, you need to call the Bind interface of Apiserver to complete.</p>
+<blockquote>
+<p>The following k8s source code version is 1.18.1<br>
+Let's check the kube-scheduler source code. The scheduler uses the list-watch mechanism to monitor the Pod's new, updated, and deleted events in the cluster, and calls the callback function. After the nodeName is specified, it will not be put into the unscheduled podQueue queue, and it will not go through the above stages.<br>
+https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/scheduler.go#L234<br>
+Among them, when constructing callback functions for adding, updating, and deleting pod resource objects, divided into scheduled and unscheduled callbacks.</p>
+</blockquote>
+<p>Scheduled pod callback:</p>
+<p>The scheduled pods are filtered according to the logic defined in FilterFunc. When nodeName is not empty, when it returns true, it will go to AddFunc, UpdateFunc, and DeleteFunc defined in Handler. In the cache, because the scheduler maintains a cache of pod lists on the node.<br>
+https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/eventhandlers.go#L356</p>
+<pre><code>	// scheduled pod cache
+	podInformer.Informer().AddEventHandler(
+		cache.FilteringResourceEventHandler{
+			FilterFunc: func(obj interface{}) bool {
+				switch t := obj.(type) {
+				case *v1.Pod:
+					return assignedPod(t)
+				case cache.DeletedFinalStateUnknown:
+					if pod, ok := t.Obj.(*v1.Pod); ok {
+						return assignedPod(pod)
+					}
+					utilruntime.HandleError(fmt.Errorf(&quot;unable to convert object %T to *v1.Pod in %T&quot;, obj, sched))
+					return false
+				default:
+					utilruntime.HandleError(fmt.Errorf(&quot;unable to handle object in %T: %T&quot;, sched, obj))
+					return false
+				}
+			},
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc:    sched.addPodToCache,
+				UpdateFunc: sched.updatePodInCache,
+				DeleteFunc: sched.deletePodFromCache,
+			},
+		},
+	)
+</code></pre>
+<p>Unscheduled pod callbacks:</p>
+<p>Unscheduled pods are filtered according to the logic defined in FilterFunc. When nodeName is empty and pod ’s SchedulerName matches the scheduler ’s name, true is returned; when true is returned, AddFunc, UpdateFunc, and DeleteFunc defined in Handler will be used. Will be added to podQueue.<br>
+https://github.com/kubernetes/kubernetes/blob/master/pkg/scheduler/eventhandlers.go#L380</p>
+<pre><code>	// unscheduled pod queue
+	podInformer.Informer().AddEventHandler(
+		cache.FilteringResourceEventHandler{
+			FilterFunc: func(obj interface{}) bool {
+				switch t := obj.(type) {
+				case *v1.Pod:
+					return !assignedPod(t) &amp;&amp; responsibleForPod(t, sched.Profiles)
+				case cache.DeletedFinalStateUnknown:
+					if pod, ok := t.Obj.(*v1.Pod); ok {
+						return !assignedPod(pod) &amp;&amp; responsibleForPod(pod, sched.Profiles)
+					}
+					utilruntime.HandleError(fmt.Errorf(&quot;unable to convert object %T to *v1.Pod in %T&quot;, obj, sched))
+					return false
+				default:
+					utilruntime.HandleError(fmt.Errorf(&quot;unable to handle object in %T: %T&quot;, sched, obj))
+					return false
+				}
+			},
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc:    sched.addPodToSchedulingQueue,
+				UpdateFunc: sched.updatePodInSchedulingQueue,
+				DeleteFunc: sched.deletePodFromSchedulingQueue,
+			},
+		},
+	)
+</code></pre>
+<ul>
+<li>
+<p>Applicable scenarios for manual scheduling:</p>
+<p>When the scheduler is not working, you can set nodeName for temporary emergency;<br>
+Can be packaged into its own scheduler;</p>
+</li>
+<li>
+<p>Extension point:</p>
+<p>In the past several versions of Daemonset, the controller directly specified the pod's running node without going through the scheduler.<br>
+Until version 1.11, the pods of DaemonSet were scheduled by scheduler before being introduced as alpha features</p>
+</li>
+</ul>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes Questions -- day3]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-question-day3/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day3/">
         </link>
-        <updated>2020-04-07T09:58:16.000Z</updated>
-        <content type="html"><![CDATA[<p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
+        <updated>2020-04-06T09:58:16.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
 <h2 id="answer">Answer</h2>
 <pre><code>[root@liabio ~]# kubectl run  cka-1120 --replicas 2 --expose=true --port=80 --image=nginx
 
@@ -137,8 +250,9 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-2/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-2/">
         </link>
-        <updated>2020-04-06T03:19:12.000Z</updated>
-        <content type="html"><![CDATA[<p>Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from the pv being dynamically created to pv being used by pods?</p>
+        <updated>2020-04-05T15:19:12.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from the pv being dynamically created to pv being used by pods?</p>
 <p>A.</p>
 <pre><code>PersistentVolumeController + CSI-Provisoner + CSI controller plugin
 </code></pre>
@@ -179,8 +293,8 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
         <id>https://jiaming-hu.com/post/kubernetes-question-day1/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day1/">
         </link>
-        <updated>2020-04-05T12:52:09.000Z</updated>
-        <content type="html"><![CDATA[<p>Today's question:</p>
+        <updated>2020-04-05T00:52:09.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Which of the following <code>Daemonset</code> yaml are correct:</p>
 <p>A.</p>
 <pre><code class="language-yaml">apiVersion: apps/v1
