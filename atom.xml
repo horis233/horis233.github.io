@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-09T18:55:24.130Z</updated>
+    <updated>2020-04-09T19:48:19.345Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -11,11 +11,11 @@
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day4]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 4]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day4/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day4/">
         </link>
-        <updated>2020-04-09T06:19:39.000Z</updated>
+        <updated>2020-04-08T18:19:39.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Through the command line, use the nginx image to create a pod and manually schedule it to a node named node1121. The name of the pod is cka-1121. The best answer is attached. The command used to create the pod is the most streamlined yaml.<br>
 if the comment is there Restrictions, please list the points of attention, mainly need to list how to do manual scheduling?</p>
@@ -123,11 +123,11 @@ Until version 1.11, the pods of DaemonSet were scheduled by scheduler before bei
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- day3]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 3]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-question-day3/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day3/">
         </link>
-        <updated>2020-04-06T09:58:16.000Z</updated>
+        <updated>2020-04-05T21:58:16.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
 <h2 id="answer">Answer</h2>
@@ -246,11 +246,11 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- day 2]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 2]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-2/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-2/">
         </link>
-        <updated>2020-04-05T15:19:12.000Z</updated>
+        <updated>2020-04-05T03:19:12.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from the pv being dynamically created to pv being used by pods?</p>
 <p>A.</p>
@@ -289,11 +289,11 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- day1]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 1]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-question-day1/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day1/">
         </link>
-        <updated>2020-04-05T00:52:09.000Z</updated>
+        <updated>2020-04-04T00:52:09.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Which of the following <code>Daemonset</code> yaml are correct:</p>
 <p>A.</p>
