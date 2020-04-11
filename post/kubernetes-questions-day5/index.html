@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day5 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586569267887">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+By using the command line, create two deployments.
+There are 2 nodes in the cluster:
+The first deployment name ..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586569267887" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day5</h2>
+            <div class="post-date">2020-04-10</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-questions-day5.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>By using the command line, create two deployments.</p>
+<p>There are 2 nodes in the cluster:</p>
+<p>The first deployment name is cka-1122-01, using nginx image, there are 2 pods, and configure the deployment itself to anti-affinity at the node level between pods;</p>
+<p>The second deployment name is cka-1122-02, using the nginx image, there are 2 pods, and configure the deployment pod have affinity with the first deployment pod at the node level;</p>
+<h2 id="answer">Answer</h2>
+<ul>
+<li>The first deployment: cka-1122-01</li>
+</ul>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cka-1122-01
+  name: cka-1122-01
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cka-1122-01
+  template:
+    metadata:
+      labels:
+        app: cka-1122-01
+    spec:
+      containers:
+      - image: nginx
+        name: cka-1122-01  
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cka-1122-01
+              topologyKey: &quot;kubernetes.io/hostname&quot;
+</code></pre>
+<ul>
+<li>The second deployment: cka-1122-02</li>
+</ul>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cka-1122-02
+  name: cka-1122-02
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cka-1122-02
+  template:
+    metadata:
+      labels:
+        app: cka-1122-02
+    spec:
+      containers:
+      - image: nginx
+        name: cka-1122-02
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - cka-1122-01
+            topologyKey: &quot;kubernetes.io/hostname&quot;
+</code></pre>
+<p>The schedule result:</p>
+<pre><code>NAME                           READY     STATUS    RESTARTS   AGE       IP           NODE
+cka-1122-01-5df9bdf8c9-qwd2v    1/1      Running      0       8m     10.192.4.2     node-1
+cka-1122-01-5df9bdf8c9-r4rhs    1/1      Running      0       8m     10.192.4.3     node-2  
+cka-1122-02-749cd4b846-bjhzq    1/1      Running      0       10m    10.192.4.4     node-1
+cka-1122-02-749cd4b846-rkgpo    1/1      Running      0       10m    10.192.4.5     node-2  
+</code></pre>
+<p>Affinity and Anti-Affinity document:<br>
+https://kubernetes.io/docs/concepts/configuration/assign-pod-node/</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day4/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day 4
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

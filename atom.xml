@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-09T19:48:19.345Z</updated>
+    <updated>2020-04-11T01:41:13.677Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -10,6 +10,95 @@
     <logo>https://jiaming-hu.com/images/avatar.png</logo>
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day5]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-questions-day5/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-questions-day5/">
+        </link>
+        <updated>2020-04-10T12:27:36.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>By using the command line, create two deployments.</p>
+<p>There are 2 nodes in the cluster:</p>
+<p>The first deployment name is cka-1122-01, using nginx image, there are 2 pods, and configure the deployment itself to anti-affinity at the node level between pods;</p>
+<p>The second deployment name is cka-1122-02, using the nginx image, there are 2 pods, and configure the deployment pod have affinity with the first deployment pod at the node level;</p>
+<h2 id="answer">Answer</h2>
+<ul>
+<li>The first deployment: cka-1122-01</li>
+</ul>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cka-1122-01
+  name: cka-1122-01
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cka-1122-01
+  template:
+    metadata:
+      labels:
+        app: cka-1122-01
+    spec:
+      containers:
+      - image: nginx
+        name: cka-1122-01  
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cka-1122-01
+              topologyKey: &quot;kubernetes.io/hostname&quot;
+</code></pre>
+<ul>
+<li>The second deployment: cka-1122-02</li>
+</ul>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cka-1122-02
+  name: cka-1122-02
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cka-1122-02
+  template:
+    metadata:
+      labels:
+        app: cka-1122-02
+    spec:
+      containers:
+      - image: nginx
+        name: cka-1122-02
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - cka-1122-01
+            topologyKey: &quot;kubernetes.io/hostname&quot;
+</code></pre>
+<p>The schedule result:</p>
+<pre><code>NAME                           READY     STATUS    RESTARTS   AGE       IP           NODE
+cka-1122-01-5df9bdf8c9-qwd2v    1/1      Running      0       8m     10.192.4.2     node-1
+cka-1122-01-5df9bdf8c9-r4rhs    1/1      Running      0       8m     10.192.4.3     node-2  
+cka-1122-02-749cd4b846-bjhzq    1/1      Running      0       10m    10.192.4.4     node-1
+cka-1122-02-749cd4b846-rkgpo    1/1      Running      0       10m    10.192.4.5     node-2  
+</code></pre>
+<p>Affinity and Anti-Affinity document:<br>
+https://kubernetes.io/docs/concepts/configuration/assign-pod-node/</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Kubernetes Questions -- Day 4]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day4/</id>
