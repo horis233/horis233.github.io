@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day 6 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586656144454">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Through the command line, create a deployment, the number of copies is 3, and the image is nginx: latest. Then ..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586656144454" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day 6</h2>
+            <div class="post-date">2020-04-11</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-questions-day-6.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Through the command line, create a deployment, the number of copies is 3, and the image is nginx: latest. Then scroll to nginx: 1.9.1, and then roll back to the original version</p>
+<p>Requirements: The name of the deployment is cka-1125, and the related commands used are posted.</p>
+<p>It is best to attach the completed deployment yaml and the commands related to the upgrade rollback.</p>
+<h2 id="anwser">Anwser</h2>
+<p>Create a deployment first, you can use the command to create:</p>
+<pre><code>kubectl run cka-1125  --image=nginx --replicas=3
+</code></pre>
+<p>You can also use the following yaml: cka-1125.yaml to create</p>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cka-1125
+  name: cka-1125
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cka-1125
+  template:
+    metadata:
+      labels:
+        app: cka-1125
+    spec:
+      containers:
+      - image: nginx
+        name: cka-1125
+</code></pre>
+<p>Create:</p>
+<pre><code>kubectl apply -f cka-1125.yaml
+</code></pre>
+<p>Upgrade:</p>
+<pre><code>kubectl set image deploy/cka-1125 cka-1125=nginx:1.9.1 --record
+deployment.extensions/cka-1125 image updated
+</code></pre>
+<p>Rollback:</p>
+<pre><code># Rollback to the previous version
+kubectl rollout undo deploy/cka-1125
+# Rollback to the specified version
+kubectl rollout undo deploy/cka-1125 --to-revision=2
+</code></pre>
+<p>the offical document of the set image commnad<br>
+https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#set</p>
+<h3 id="set-image">Set image</h3>
+<p>Set image command:<br>
+The format of the set image command is as follows:</p>
+<pre><code>kubectl set image (-f FILENAME | TYPE NAME) CONTAINER_NAME_1=CONTAINER_IMAGE_1 ... CONTAINER_NAME_N=CONTAINER_IMAGE_N [--record]
+</code></pre>
+<p><code>--record</code> specifies that the current kubectl command is recorded in the annotation. If set to <code>false</code>, the command is not recorded. If set to <code>true</code>, the command is recorded. The default is <code>false</code>.</p>
+<pre><code>[root@liabio test]# kubectl set image deploy/cka-1125 cka-1125=nginx:1.9.1 --record
+deployment.extensions/cka-1125 image updated
+[root@liabio test]# 
+[root@liabio test]# kubectl rollout history deploy/cka-1125 
+deployment.extensions/cka-1125 
+REVISION  CHANGE-CAUSE
+3         &lt;none&gt;
+4         kubectl set image deploy/cka-1125 cka-1125=nginx:1.9.1 --record=true
+</code></pre>
+<p>As above, there will be an upgrade command in CHANGE-CAUSE.<br>
+The set image command can operate on: <code>pod (po), replicationcontroller (rc), deployment (deploy), daemonset (ds), replicaset (rs), statefulset (sts)</code>.</p>
+<h3 id="roll-command">Roll command</h3>
+<p>the offical document of the roll image commnad<br>
+https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#rollout<br>
+The roll command can manage the rollback of deployments, daemonsets, statefulsets resources:</p>
+<p>Query upgrade history:</p>
+<pre><code>[root@liabio test]# kubectl rollout history deploy/cka-1125 
+deployment.extensions/cka-1125 
+REVISION  CHANGE-CAUSE
+1         &lt;none&gt;
+2         &lt;none&gt;
+</code></pre>
+<p>Check the details of the specified version:</p>
+<pre><code>kubectl rollout history deploy/cka-1125 --revision=3 -o=yaml
+</code></pre>
+<p>Rollback to the previous version</p>
+<pre><code>[root@liabio test]# kubectl rollout undo deploy/cka-1125 
+deployment.extensions/cka-1125 rolled back
+</code></pre>
+<p>Rollback to the specified version</p>
+<pre><code>[root@liabio test]# kubectl rollout undo deploy/cka-1125 --to-revision=3
+deployment.extensions/cka-1125 rolled back
+</code></pre>
+<p>Other roll subcommands:</p>
+<ul>
+<li>
+<p>restart: the resource will restart; status: show the rollback status;</p>
+</li>
+<li>
+<p>resume: resume the suspended resource. The controller does not control the suspended resources. By restoring resources, the controller can be controlled again. resume is only supported for deployment.</p>
+</li>
+<li>
+<p>pause: The controller will not control the paused resource. Use kubectl rollout resume to resume suspended resources. Currently, only deployment support is suspended.</p>
+</li>
+</ul>
+<h3 id="rolling-update-strategy">Rolling update strategy</h3>
+<p>the offical document of rollingupdate<br>
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/</p>
+<pre><code>minReadySeconds: 5
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1
+</code></pre>
+<p><code>minReadySeconds</code> Kubernetes upgrades after waiting for the set time. If this value is not set, Kubernetes will assume that the container will provide services after it is started. If this value is not set, it may cause the service service to run normally in some extreme cases.</p>
+<p><code>maxSurge</code> controls the total number of copies in the rolling update process to exceed the upper limit of DESIRED. maxSurge can be a specific integer or a percentage, rounded up. The default value of maxSurge is 25%.</p>
+<p>For example, DESIRED is 10, then the maximum number of copies is roundUp (10 + 10 * 25%) = 13, so CURRENT is 13.</p>
+<p><code>maxUnavaible</code> controls the maximum percentage of unavailable copies in DESIRED during the rolling update process. maxUnavailable can be a specific integer or 100%, rounded down. The default value is 25%.</p>
+<p>For example, DESIRED is 10, then the number of available copies must be at least 10-roundDown (10 * 25%) = 8, so AVAILABLE is 8.</p>
+<p><code>The larger maxSurge, the more new copies created initially; the larger maxUnavailable, the more old copies originally destroyed.</code></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day5/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day5
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
