@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-12T01:49:09.515Z</updated>
+    <updated>2020-04-13T01:10:19.807Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -10,6 +10,91 @@
     <logo>https://jiaming-hu.com/images/avatar.png</logo>
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes Questions --Day 7]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-questions-day-7/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-questions-day-7/">
+        </link>
+        <updated>2020-04-12T12:49:47.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>Provide a yaml of the pod, request to add Init Container, the role of Init Container is to create an empty file, pod container to determine whether the file exists, otherwise, exit.</p>
+<h2 id="answer">Answer</h2>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: cka-1126
+  name: cka-1126
+spec:
+  initContainers:
+  - image: busybox
+    name: init-c
+    command: ['sh', '-c', 'touch /tmp/cka-1126']
+    volumeMounts:
+    - name: workdir
+      mountPath: &quot;/tmp&quot;
+  containers:
+  - image: busybox
+    name: cka-1126
+    command: ['sh', '-c', 'ls /tmp/cka-1126 &amp;&amp; sleep 3600 || exit 1']
+    volumeMounts:
+    - name: workdir
+      mountPath: &quot;/tmp&quot;
+  volumes:
+  - name: workdir
+    emptyDir: {}
+</code></pre>
+<p>The command of the Container is to determine whether the file exists, not exit if it exists, and exit if it does not exist; you can also use the following if to determine:</p>
+<pre><code>command: ['sh', '-c', 'if [ -e /tmp/cka-1126 ];then echo &quot;file exits&quot;;else echo &quot;file not exits&quot; &amp;&amp; exit 1;fi']
+</code></pre>
+<h3 id="init-container">init container</h3>
+<p>The key point of this question is that the init container and the main container need to mount a directory called workdir together. The init container creates an empty file in it. The main container checks whether the file exists, and the main syntax is shell syntax;</p>
+<pre><code>command: ['sh', '-c', 'ls /tmp/cka-1126 &amp;&amp; sleep 3600 || exit 1']
+</code></pre>
+<p>This sentence means: If the return code of <code>ls /tmp/cka-1126</code> is 0, that is the file exists, sleep 3600 seconds; otherwise exit 1 exits;</p>
+<p>You can also use the <code>if</code> syntax to judge.</p>
+<p>Official document address:<br>
+https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/<br>
+https://kubernetes.io/docs/concepts/workloads/pods/init-containers/</p>
+<h3 id="carding-concepts">Carding concepts</h3>
+<p>Initialize the container. As the name suggests, when the container is started, it will start one or more containers. If there are multiple containers, then these Init Containers are executed in order according to the defined order. If one is executed successfully, the next one can be executed. Only all Init After the Container is executed, the main container will start. Since the storage volume in a Pod is shared, the data generated in the Init Container can be used by the main container.</p>
+<p>Init Container can be used in a variety of K8S resources such as Deployment, Daemon Set, StatefulSet, Job, etc. But in the final analysis, it is executed when the Pod starts, before the main container starts, and does the initialization work.</p>
+<p>The Init container supports all fields and features of the application container, including resource limits, data volumes, and security settings. However, Init containers do not support Readiness Probes because they must be completed before the Pod is ready; there will be slight differences in resource limits and scheduling.</p>
+<p>###Application scenario<br>
+Wait for other modules Ready: For example, there is an application with two containerized services, one is Web Server and the other is database. The Web Server needs to access the database. However, when we start this application, there is no guarantee that the database service will start first, so there may be errors in the Web Server connecting to the database for a period of time. In order to solve this problem, we can use an InitContainer in the Pod running the Web Server service to check whether the database is ready, until the database can be connected, the Init Container ends and exits, and then the Web Server container is started to initiate a formal database connection request .</p>
+<p>Initial configuration: for example, to detect all existing member nodes in the cluster and prepare the configuration information of the cluster for the main container, so that the main container can use this configuration information to join the cluster when it is up; currently in containerization, it is often used when initializing the cluster configuration file Arrive</p>
+<p>Provide a way to block the start of the container: the next container must be run after the initContainer container is successfully started, which guarantees a successful way of running a set of conditions;</p>
+<p>Other usage scenarios: register pods to a central database, download application dependencies, etc.</p>
+<p>Kubernetes version 1.5 began to support pod.beta.kubernetes.io/init-containers to declare initContainer under annotations, like the following.</p>
+<pre><code>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+  annotations:
+    pod.beta.kubernetes.io/init-containers: '[
+        {
+            &quot;name&quot;: &quot;init-myservice&quot;,
+            &quot;image&quot;: &quot;busybox&quot;,
+            &quot;command&quot;: [&quot;sh&quot;, &quot;-c&quot;, &quot;until nslookup myservice; do echo waiting for myservice; sleep 2; done;&quot;]
+        },
+        {
+            &quot;name&quot;: &quot;init-mydb&quot;,
+            &quot;image&quot;: &quot;busybox&quot;,
+            &quot;command&quot;: [&quot;sh&quot;, &quot;-c&quot;, &quot;until nslookup mydb; do echo waiting for mydb; sleep 2; done;&quot;]
+        }
+    ]'
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox
+    command: ['sh', '-c', 'echo The app is running! &amp;&amp; sleep 3600']
+</code></pre>
+<p>The new syntax of Kubernetes version 1.6 moved the declaration of the Init container to spec, but the old annotation syntax can still be used.</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Kubernetes Questions -- Day 6]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-6/</id>

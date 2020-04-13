@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions --Day 7 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586740216203">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Provide a yaml of the pod, request to add Init Container, the role of Init Container is to create an empty file..." />
+    <meta name="keywords" content="" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586740216203" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions --Day 7</h2>
+            <div class="post-date">2020-04-12</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-questions-day-7.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Provide a yaml of the pod, request to add Init Container, the role of Init Container is to create an empty file, pod container to determine whether the file exists, otherwise, exit.</p>
+<h2 id="answer">Answer</h2>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: cka-1126
+  name: cka-1126
+spec:
+  initContainers:
+  - image: busybox
+    name: init-c
+    command: ['sh', '-c', 'touch /tmp/cka-1126']
+    volumeMounts:
+    - name: workdir
+      mountPath: &quot;/tmp&quot;
+  containers:
+  - image: busybox
+    name: cka-1126
+    command: ['sh', '-c', 'ls /tmp/cka-1126 &amp;&amp; sleep 3600 || exit 1']
+    volumeMounts:
+    - name: workdir
+      mountPath: &quot;/tmp&quot;
+  volumes:
+  - name: workdir
+    emptyDir: {}
+</code></pre>
+<p>The command of the Container is to determine whether the file exists, not exit if it exists, and exit if it does not exist; you can also use the following if to determine:</p>
+<pre><code>command: ['sh', '-c', 'if [ -e /tmp/cka-1126 ];then echo &quot;file exits&quot;;else echo &quot;file not exits&quot; &amp;&amp; exit 1;fi']
+</code></pre>
+<h3 id="init-container">init container</h3>
+<p>The key point of this question is that the init container and the main container need to mount a directory called workdir together. The init container creates an empty file in it. The main container checks whether the file exists, and the main syntax is shell syntax;</p>
+<pre><code>command: ['sh', '-c', 'ls /tmp/cka-1126 &amp;&amp; sleep 3600 || exit 1']
+</code></pre>
+<p>This sentence means: If the return code of <code>ls /tmp/cka-1126</code> is 0, that is the file exists, sleep 3600 seconds; otherwise exit 1 exits;</p>
+<p>You can also use the <code>if</code> syntax to judge.</p>
+<p>Official document address:<br>
+https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/<br>
+https://kubernetes.io/docs/concepts/workloads/pods/init-containers/</p>
+<h3 id="carding-concepts">Carding concepts</h3>
+<p>Initialize the container. As the name suggests, when the container is started, it will start one or more containers. If there are multiple containers, then these Init Containers are executed in order according to the defined order. If one is executed successfully, the next one can be executed. Only all Init After the Container is executed, the main container will start. Since the storage volume in a Pod is shared, the data generated in the Init Container can be used by the main container.</p>
+<p>Init Container can be used in a variety of K8S resources such as Deployment, Daemon Set, StatefulSet, Job, etc. But in the final analysis, it is executed when the Pod starts, before the main container starts, and does the initialization work.</p>
+<p>The Init container supports all fields and features of the application container, including resource limits, data volumes, and security settings. However, Init containers do not support Readiness Probes because they must be completed before the Pod is ready; there will be slight differences in resource limits and scheduling.</p>
+<p>###Application scenario<br>
+Wait for other modules Ready: For example, there is an application with two containerized services, one is Web Server and the other is database. The Web Server needs to access the database. However, when we start this application, there is no guarantee that the database service will start first, so there may be errors in the Web Server connecting to the database for a period of time. In order to solve this problem, we can use an InitContainer in the Pod running the Web Server service to check whether the database is ready, until the database can be connected, the Init Container ends and exits, and then the Web Server container is started to initiate a formal database connection request .</p>
+<p>Initial configuration: for example, to detect all existing member nodes in the cluster and prepare the configuration information of the cluster for the main container, so that the main container can use this configuration information to join the cluster when it is up; currently in containerization, it is often used when initializing the cluster configuration file Arrive</p>
+<p>Provide a way to block the start of the container: the next container must be run after the initContainer container is successfully started, which guarantees a successful way of running a set of conditions;</p>
+<p>Other usage scenarios: register pods to a central database, download application dependencies, etc.</p>
+<p>Kubernetes version 1.5 began to support pod.beta.kubernetes.io/init-containers to declare initContainer under annotations, like the following.</p>
+<pre><code>
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+  annotations:
+    pod.beta.kubernetes.io/init-containers: '[
+        {
+            &quot;name&quot;: &quot;init-myservice&quot;,
+            &quot;image&quot;: &quot;busybox&quot;,
+            &quot;command&quot;: [&quot;sh&quot;, &quot;-c&quot;, &quot;until nslookup myservice; do echo waiting for myservice; sleep 2; done;&quot;]
+        },
+        {
+            &quot;name&quot;: &quot;init-mydb&quot;,
+            &quot;image&quot;: &quot;busybox&quot;,
+            &quot;command&quot;: [&quot;sh&quot;, &quot;-c&quot;, &quot;until nslookup mydb; do echo waiting for mydb; sleep 2; done;&quot;]
+        }
+    ]'
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox
+    command: ['sh', '-c', 'echo The app is running! &amp;&amp; sleep 3600']
+</code></pre>
+<p>The new syntax of Kubernetes version 1.6 moved the declaration of the Init container to spec, but the old annotation syntax can still be used.</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-6/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day 6
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
