@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-15T01:16:43.851Z</updated>
+    <updated>2020-04-15T01:17:15.476Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -192,11 +192,11 @@ type: Opaque
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions --Day 7]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 7]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-7/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-7/">
         </link>
-        <updated>2020-04-12T00:49:47.000Z</updated>
+        <updated>2020-04-11T12:49:47.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Provide a yaml of the pod, request to add Init Container, the role of Init Container is to create an empty file, pod container to determine whether the file exists, otherwise, exit.</p>
 <h2 id="answer">Answer</h2>
