@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day 8 | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1586913398183">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Create a secret named cka1127-secret, which contains a password field with a value of cka1127, and then use ENV..." />
+    <meta name="keywords" content="Kubernetes" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1586913398183" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day 8</h2>
+            <div class="post-date">2020-04-14</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-questions-day-8.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Create a secret named cka1127-secret, which contains a password field with a value of cka1127, and then use ENV to call in Pod1 named cka1127-01, and use Volume to mount under /data in Pod2 named cka1127-02;</p>
+<h2 id="answer">Answer</h2>
+<p>###Create secret</p>
+<h4 id="use-yaml-file">use YAML file</h4>
+<p>cka1127-secret.yaml:</p>
+<pre><code>apiVersion: v1
+kind: Secret
+metadata:
+  name: cka1127-secret
+type: Opaque
+stringData:
+  password: cka1127
+</code></pre>
+<pre><code>kubectl apply -f  cka-1127-secret.yaml 
+</code></pre>
+<h4 id="using-cli">using CLI</h4>
+<pre><code>kubectl create secret generic cka1127-secret --from-literal=password=cka1127
+</code></pre>
+<h3 id="create-pod-cka1127-01">Create pod cka1127-01</h3>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: cka1127-01
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    env:
+    - name: PASSWORD
+       valueFrom:
+        secretKeyRef:
+          name: cka1127-secret
+          key: password
+</code></pre>
+<pre><code>kubectl exec -ti cka1127-01  bash
+root@cka1127-01:/# 
+root@cka1127-01:/# echo $PASSWORD
+cka1127
+root@cka1127-01:/#
+</code></pre>
+<h3 id="create-pod-cka1127-02">Create pod cka1127-02</h3>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: cka1127-02
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: pwd
+       mountPath: /data
+       readOnly: true
+  volumes:
+  - name: pwd
+     secret:
+       secretName: cka1127-secret
+</code></pre>
+<pre><code># kubectl exec -ti cka1127-02 sh
+# 
+# ls -l /data
+total 0
+lrwxrwxrwx 1 root root 15 Nov 28 00:40 password -&gt; ..data/password
+# cat /data/password
+cka1127# 
+</code></pre>
+<h2 id="introduction">Introduction</h2>
+<p>K8s offical document of secret https://kubernetes.io/docs/concepts/configuration/secret/</p>
+<h3 id="introduction-to-secret">Introduction to secret</h3>
+<p><code>Secret</code> resources in Kubernetes can be used to store sensitive data such as passwords, tokens, and secret keys, and store these sensitive information in <code>Secret</code>, which is more secure and flexible than exposure to Pods and images.</p>
+<p>You may think that secret is generally not used. In fact, when creating a Pod, Kubernetes automatically creates a secret containing the credentials used to access the API (controlled by the <code>service account token controller</code> of kube-controller-manager), and it will Automatically modify the Pod to use this type of secret (this is controlled by the <code>Admission Controller</code>).</p>
+<p>Each namespace of k8s will have a Service Account. When we create a namespace, the service account controller will monitor the creation of the namespace, a service account named default will be created in the namespace, and the service account token controller will monitor the creation of the service account , Create the corresponding secret, and bind this secret to the Service Account.</p>
+<pre><code># kubectl create ns cka
+namespace/cka created
+# kubectl get sa -n cka
+NAME      SECRETS   AGE
+default   1         11s
+# kubectl get secrets -n cka
+NAME                  TYPE                                  DATA   AGE
+default-token-r77xn   kubernetes.io/service-account-token   3      18s
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://jiaming-hu.com/post-images/1586911624680.png" alt="" loading="lazy"></figure>
+<p>When we create a Pod, if no Service Account is specified, it will automatically be assigned a Service Account in the same command space namespace by default. You can see that the spec.serviceAccountName field has been automatically set.</p>
+<figure data-type="image" tabindex="2"><img src="https://jiaming-hu.com/post-images/1586911645342.jpeg" alt="" loading="lazy"></figure>
+<p>You can use the automatically added Service Account credentials to access the API from within the Pod. The API permissions of the Service Account depend on the authorization plugin and policy used.</p>
+<p>For more information about how Service Account works, please see the documentation: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</p>
+<h3 id="types-of-secret">Types of Secret</h3>
+<p><code>--type</code> specifies the type of secret created, Kubernetes has built-in three types of Secret</p>
+<h4 id="kubernetesio-service-account-token-secret">kubernetes.io / service-account-token Secret</h4>
+<p>As mentioned above, in order to access the Kubernetes API from within the Pod, Kubernetes provides Service Account resources. The Service Account will automatically create and mount the Secret that accesses the Kubernetes API, and will be mounted in the Pod's /var/run/secrets/kubernetes.io/serviceaccount directory. The Secret used by the Service Account that is automatically created when the namespace is created is of this type.<br>
+<img src="https://jiaming-hu.com/post-images/1586911898128.png" alt="" loading="lazy"></p>
+<h4 id="opaque-secret">Opaque Secret</h4>
+<p>The Opaque type Secret is a map structure (key-value), where vlaue requires encoding in base64 format. In the following examples, it is basically the Opaque type Secret.</p>
+<h4 id="kubernetesio-dockerconfigjson-secret">kubernetes.io / dockerconfigjson Secret</h4>
+<p>Secret of type <code>kubernetes.io/dockercfg</code> is used to store private Docker Registry authentication information. When Kubernetes creates a Pod and needs to pull the image from the private Docker Registry, it needs to use the authentication information, and it will use the kubernetes.io/dockercfg type Secret.</p>
+<pre><code>kubectl create secret docker-registry cka-regsecret \
+--docker-server=coderaction \
+--docker-username=admin \
+--docker-password=123456 \
+--docker-email=837448191@qq.com
+</code></pre>
+<p>When creating a Pod, you need to use it in the Pod spec as follows:</p>
+<pre><code>apiVersion: v1
+kind: Pod
+metadata:
+  name: cka-private-reg
+spec:
+  containers:
+    - name: cka-private-reg-container
+      image: nginx
+  imagePullSecrets:
+    - name: cka-regsecret
+</code></pre>
+<p>You can refer to the official documentation: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod</p>
+<p>Add imagePullSecrets to the default ServiceAccount of the partition, so that all Pods created can automatically add spec.imagePullSecrets. For details, refer to the official document: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ # add-imagepullsecrets-to-a-service-account</p>
+<h3 id="create-secret">Create secret</h3>
+<h4 id="use-kubectl-to-create-secret">Use kubectl to create secret</h4>
+<p>kubectl creates seccret official document: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-secret-em-</p>
+<p>format</p>
+<pre><code>kubectl create secret generic NAME [--type=string] [--from-file=[key=]source] [--from-literal=key1=value1] [--dry-run]
+</code></pre>
+<p>--from-literal: Specify the key and text value to be inserted (that is, mykey = somevalue), the value is a plain text value, and it will be encoded by base64 after creation; Files, in this case, will be assigned a default name; or you can choose to use the specified directory, which will iterate over each valid file key in that directory. --type: The type of secret created. Three types have been introduced above; --dry-run: If true, only the created object will be sent to APIServer without sending it. The default value is false</p>
+<h3 id="create-secret-by-from-file">create secret by <code>--from-file</code></h3>
+<pre><code># echo -n 'admin' &gt; ./username
+# echo -n 'test123' &gt; ./password
+# echo -n 'shanghai' &gt; ./city
+# ll
+total 12
+-rw-r--r-- 1 root root 9 Nov 28 20:44 city
+-rw-r--r-- 1 root root 8 Nov 28 20:43 password
+-rw-r--r-- 1 root root 6 Nov 28 20:43 username
+# kubectl create secret generic test-cka1127-01 --from-file=./username --from-file=./password
+secret/test-cka1127-01 created
+# kubectl create secret generic test-cka1127-02 --from-file=./
+secret/test-cka1127-02 created
+# 
+</code></pre>
+<p>With the secret created in the specified directory, all files in the directory are added to the data:</p>
+<pre><code>kubectl get secrets test-cka1127-02 -oyaml
+apiVersion: v1
+data:
+  city: c2hhbmdoYWkK
+  password: dGVzdDEyMwo=
+  username: YWRtaW4K
+kind: Secret
+metadata:
+  creationTimestamp: &quot;2019-11-28T12:44:57Z&quot;
+  name: test-cka1127-02
+  namespace: default
+  resourceVersion: &quot;14636360&quot;
+  selfLink: /api/v1/namespaces/default/secrets/test-cka1127-02
+  uid: 4a3a1a5d-09e6-4bf9-bbe3-3300db1ddf7a
+type: Opaque
+</code></pre>
+<p>Specify the secret created by username and password:</p>
+<pre><code>kubectl get secrets test-cka1127-01 -oyaml
+apiVersion: v1
+data:
+  password: dGVzdDEyMwo=
+  username: YWRtaW4K
+kind: Secret
+metadata:
+  creationTimestamp: &quot;2019-11-28T12:44:47Z&quot;
+  name: test-cka1127-01
+  namespace: default
+  resourceVersion: &quot;14636347&quot;
+  selfLink: /api/v1/namespaces/default/secrets/test-cka1127-01
+  uid: 766516a2-34be-4a18-b4e2-83751a6cd2b7
+type: Opaque
+</code></pre>
+<h3 id="create-secret-from-the-generator">Create Secret from the generator</h3>
+<p>Starting from 1.14, Kubectl supports Kustomize to manage objects. With this new feature, you can also create a Secret from the generator and then apply it to create objects on Apiserver.</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/VgFkcO-8l/" class="tag">
+                    Kubernetes
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-7/">
+                  <h3 class="post-title">
+                    Kubernetes Questions --Day 7
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
