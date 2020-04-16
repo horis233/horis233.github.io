@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-16T02:49:06.381Z</updated>
+    <updated>2020-04-16T02:49:51.320Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -15,7 +15,7 @@
         <id>https://jiaming-hu.com/post/golang-learning-blog/</id>
         <link href="https://jiaming-hu.com/post/golang-learning-blog/">
         </link>
-        <updated>2020-04-15T02:42:53.000Z</updated>
+        <updated>2020-04-15T14:49:45.000Z</updated>
         <content type="html"><![CDATA[<h2 id="basic">Basic</h2>
 <p><a href="http://devs.cloudimmunity.com/gotchas-and-common-mistakes-in-go-golang/">50 Shades of Go: Traps, Gotchas, and Common Mistakes for New Golang Devs</a></p>
 ]]></content>
