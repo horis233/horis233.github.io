@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-18T00:14:00.187Z</updated>
+    <updated>2020-04-18T00:28:32.331Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -11,11 +11,11 @@
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 9 | (isolated from the network) to allow access to A B, C is not allowed to access B, how to do it; K8S access control RBAC, Role, RoleBinding and lead serviceaccount]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 9 | (isolated from the network) to allow access to A B, C is not allowed to access B, how to do it]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-9-or-isolated-from-the-network-to-allow-access-to-a-b-c-is-not-allowed-to-access-b-how-to-do-it-k8s-access-control-rbac-role-rolebinding-and-lead-serviceaccount/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-9-or-isolated-from-the-network-to-allow-access-to-a-b-c-is-not-allowed-to-access-b-how-to-do-it-k8s-access-control-rbac-role-rolebinding-and-lead-serviceaccount/">
         </link>
-        <updated>2020-04-17T08:24:44.000Z</updated>
+        <updated>2020-04-16T20:24:44.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Deployment application deployment three (A, B, C), to allow access to B application A, application B but not allowed to access C.</p>
 <ul>
@@ -319,11 +319,11 @@ spec:
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 8]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 8 | Secret type, creation, Pod use, and ServiceAccount associated Secret]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-8/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-8/">
         </link>
-        <updated>2020-04-14T11:52:18.000Z</updated>
+        <updated>2020-04-13T23:52:18.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Create a secret named cka1127-secret, which contains a password field with a value of cka1127, and then use ENV to call in Pod1 named cka1127-01, and use Volume to mount under /data in Pod2 named cka1127-02;</p>
 <h2 id="answer">Answer</h2>
@@ -500,11 +500,11 @@ type: Opaque
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 7]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 7 | InitContainer concept, usage, usage scenario introduction; k8s secret env, volume exam questions]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-7/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-7/">
         </link>
-        <updated>2020-04-11T12:49:47.000Z</updated>
+        <updated>2020-04-11T00:49:47.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Provide a yaml of the pod, request to add Init Container, the role of Init Container is to create an empty file, pod container to determine whether the file exists, otherwise, exit.</p>
 <h2 id="answer">Answer</h2>
@@ -585,11 +585,11 @@ spec:
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 6]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 6 | Deployment upgrade, rollback, rolling update strategy, roll, set image command explanation, initContainer exam questions]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-6/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-6/">
         </link>
-        <updated>2020-04-11T01:32:51.000Z</updated>
+        <updated>2020-04-10T13:32:51.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Through the command line, create a deployment, the number of copies is 3, and the image is nginx: latest. Then scroll to nginx: 1.9.1, and then roll back to the original version</p>
 <p>Requirements: The name of the deployment is cka-1125, and the related commands used are posted.</p>
@@ -704,11 +704,11 @@ strategy:
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day5]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day5 | Advanced scheduling of kube-scheduler scheduler: affinity anti-affinity scheduling, deployment upgrade rollback]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day5/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day5/">
         </link>
-        <updated>2020-04-10T00:27:36.000Z</updated>
+        <updated>2020-04-09T12:27:36.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>By using the command line, create two deployments.</p>
 <p>There are 2 nodes in the cluster:</p>
@@ -793,11 +793,11 @@ https://kubernetes.io/docs/concepts/configuration/assign-pod-node/</p>
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 4]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 4 | Manual scheduling, kube-scheduler scheduler analysis, source code analysis]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day4/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day4/">
         </link>
-        <updated>2020-04-08T06:19:39.000Z</updated>
+        <updated>2020-04-07T18:19:39.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Through the command line, use the nginx image to create a pod and manually schedule it to a node named node1121. The name of the pod is cka-1121. The best answer is attached. The command used to create the pod is the most streamlined yaml.<br>
 if the comment is there Restrictions, please list the points of attention, mainly need to list how to do manual scheduling?</p>
@@ -905,11 +905,11 @@ Until version 1.11, the pods of DaemonSet were scheduled by scheduler before bei
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 3]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 3 | Proficiency in kubectl commands for creating resource objects and analyzing from source code]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-question-day3/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day3/">
         </link>
-        <updated>2020-04-05T09:58:16.000Z</updated>
+        <updated>2020-04-04T21:58:16.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
 <h2 id="answer">Answer</h2>
@@ -1028,11 +1028,11 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 2]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 2 | Interfacing CSI storage knowledge]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-2/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-day-2/">
         </link>
-        <updated>2020-04-04T15:19:12.000Z</updated>
+        <updated>2020-04-04T03:19:12.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Under the Kubernetes PVC + PV system, What components need to participate the volume plug-in implemented by CSI, from the pv being dynamically created to pv being used by pods?</p>
 <p>A.</p>
@@ -1071,11 +1071,11 @@ https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/
 ]]></content>
     </entry>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 1]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 1 | Daemonset, docking storage CSI knowledge points]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-question-day1/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-question-day1/">
         </link>
-        <updated>2020-04-04T00:52:09.000Z</updated>
+        <updated>2020-04-03T12:52:09.000Z</updated>
         <content type="html"><![CDATA[<h2 id="question">Question</h2>
 <p>Which of the following <code>Daemonset</code> yaml are correct:</p>
 <p>A.</p>
