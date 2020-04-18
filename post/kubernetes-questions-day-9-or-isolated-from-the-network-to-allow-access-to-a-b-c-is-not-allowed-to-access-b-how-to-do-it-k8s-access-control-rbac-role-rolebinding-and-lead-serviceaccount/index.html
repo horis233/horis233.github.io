@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day 9 | (isolated from the network) to allow access to A B, C is not allowed to access B, how to do it; K8S access control RBAC, Role, RoleBinding and lead serviceaccount | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1587168834151">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Deployment application deployment three (A, B, C), to allow access to B application A, application B but not al..." />
+    <meta name="keywords" content="Kubernetes" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1587168834151" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day 9 | (isolated from the network) to allow access to A B, C is not allowed to access B, how to do it; K8S access control RBAC, Role, RoleBinding and lead serviceaccount</h2>
+            <div class="post-date">2020-04-17</div>
+            
+              <div class="feature-container" style="background-image: url('https://jiaming-hu.com/post-images/kubernetes-questions-day-9-or-isolated-from-the-network-to-allow-access-to-a-b-c-is-not-allowed-to-access-b-how-to-do-it-k8s-access-control-rbac-role-rolebinding-and-lead-serviceaccount.jpg')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Deployment application deployment three (A, B, C), to allow access to B application A, application B but not allowed to access C.</p>
+<ul>
+<li>Deployment name for cka-1128-01, cka-1128-02, cka-1128-03</li>
+<li>Network Policy name for cka-1128-np</li>
+</ul>
+<p><strong>Note:</strong> The command to create a complete deployment and network policy yaml, B and prove that A can access the application; C does not allow access B application. Divided into several comments.</p>
+<h2 id="answer">Answer</h2>
+<p>The first Deploy file cka-1128-01.yaml, using a radial/busyboxplusmirror because there are no curl busybox commands.</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cka-1128-01
+spec:
+  selector:
+    matchLabels:
+      app: cka-1128-01
+  template:
+    metadata:
+      labels:
+        app: cka-1128-01
+    spec:
+      containers:
+        - name: cka-1128-01
+          image: radial/busyboxplus
+          command: ['sh', '-c', 'sleep 1000']
+          imagePullPolicy: IfNotPresent
+</code></pre>
+<p>CKA-1128-02.yaml:</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cka-1128-02
+spec:
+  selector:
+    matchLabels:
+      app: cka-1128-02
+  template:
+    metadata:
+      labels:
+        app: cka-1128-02
+    spec:
+      containers:
+        - name: cka-1128-02
+          image: radial/busyboxplus
+          command: ['sh', '-c', 'sleep 1000']
+          imagePullPolicy: IfNotPresent
+</code></pre>
+<p>CKA-1128-03.yaml:</p>
+<pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cka-1128-03
+spec:
+  selector:
+    matchLabels:
+      app: cka-1128-03
+  template:
+    metadata:
+      labels:
+        app: cka-1128-03
+    spec:
+      containers:
+        - name: cka-1128-03
+          image: radial/busyboxplus
+          command: ['sh', '-c', 'sleep 1000']
+          imagePullPolicy: IfNotPresent
+</code></pre>
+<p>You can see A, C can access the B:</p>
+<pre><code class="language-bash">[root@liabio cka]# kubectl get pod -owide | grep cka
+cka-1128-01-7b8b8cb79-mll6d        1/1     Running   0          3m5s   192.168.155.124   liabio   &lt;none&gt;           &lt;none&gt;
+cka-1128-02-69dd65bdb7-mfq26       1/1     Running   0          3m8s   192.168.155.117   liabio   &lt;none&gt;           &lt;none&gt;
+cka-1128-03-66f8f69ff-64q75        1/1     Running   0          3m3s   192.168.155.116   liabio   &lt;none&gt;           &lt;none&gt;
+[root@liabio cka]# kubectl exec -ti cka-1128-01-7b8b8cb79-mll6d  -- ping 192.168.155.117
+PING 192.168.155.117 (192.168.155.117): 56 data bytes
+64 bytes from 192.168.155.117: seq=0 ttl=63 time=0.146 ms
+64 bytes from 192.168.155.117: seq=1 ttl=63 time=0.095 ms
+[root@liabio cka]# kubectl exec -ti cka-1128-03-66f8f69ff-64q75  -- ping 192.168.155.117
+PING 192.168.155.117 (192.168.155.117): 56 data bytes
+64 bytes from 192.168.155.117: seq=0 ttl=63 time=0.209 ms
+64 bytes from 192.168.155.117: seq=1 ttl=63 time=0.112 ms
+</code></pre>
+<p>New cka-1128-np.yaml, <code>kubectl apply -f cka-1128-np.yaml</code> creating <code>Network Policy</code>, spec.podSelector.matchLabels select Pod B management; ingress.from.podSelector.matchLabels only specify the flow rate from the opening A whitelist.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cka-1128-np
+spec:
+  podSelector:
+    matchLabels:
+      app: cka-1128-02
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: cka-1128-01
+</code></pre>
+<p>A verification discovery can ping B, C can not ping B.</p>
+<pre><code class="language-bash">[root@liabio cka]# kubectl apply -f cka-1128-np.yaml 
+networkpolicy.networking.k8s.io/cka-1128-np created
+[root@liabio cka]# kubectl get networkpolicies.
+NAME          POD-SELECTOR      AGE
+cka-1128-np   app=cka-1128-02   13s
+[root@liabio cka]# 
+[root@liabio cka]# kubectl get pod -owide | grep cka
+cka-1128-01-7b8b8cb79-mll6d        1/1     Running   1          24m    192.168.155.124   liabio   &lt;none&gt;           &lt;none&gt;
+cka-1128-02-69dd65bdb7-mfq26       1/1     Running   1          24m    192.168.155.117   liabio   &lt;none&gt;           &lt;none&gt;
+cka-1128-03-66f8f69ff-64q75        1/1     Running   1          24m    192.168.155.116   liabio   &lt;none&gt;           &lt;none&gt;
+[root@liabio cka]# kubectl exec -ti cka-1128-01-7b8b8cb79-mll6d  -- ping 192.168.155.117
+PING 192.168.155.117 (192.168.155.117): 56 data bytes
+64 bytes from 192.168.155.117: seq=0 ttl=63 time=0.213 ms
+[root@liabio cka]# kubectl exec -ti cka-1128-03-66f8f69ff-64q75  -- ping 192.168.155.117
+PING 192.168.155.117 (192.168.155.117): 56 data bytes
+......
+</code></pre>
+<h2 id="analysis">Analysis</h2>
+<p>The key point of this question is to examine k8s network policy NetworkPolicy, this knowledge is also often asked in the interview. The following excerpt from the official document:</p>
+<h3 id="concept">Concept</h3>
+<p>Network Policy (NetworkPolicy) is a specification about communication between the pod and pod and other rules between network endpoints are allowed.<br>
+NetworkPolicy tag selector resource pod, and the pod is allowed select a definition of communication rules. Network policy implemented by the network plug-in, so users must use a network solution supports the NetworkPolicy,</p>
+<p>Network policy concept with the introduction of the official document:<br>
+https://kubernetes.io/docs/concepts/services-networking/network-policies/#the-networkpolicy-resource</p>
+<p>Network policy practice official documents, this title can refer to the documentation is complete.<br>
+https://kubernetes.io/docs/tasks/administer-cluster/declare-network-policy/</p>
+<h3 id="premise">premise</h3>
+<p>Network policy implemented by the network plug-in, so users must use a network solution supports NetworkPolicy of - simply create resource objects, but no controller to take effect, then, there is no effect.</p>
+<p>###Supported network solutions<br>
+Calico、 Kube-router、 Cilium、Romana、Weave Net</p>
+<p>k8s official documentation:<br>
+https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/</p>
+<h3 id="isolated-and-non-isolated-pod">Isolated and non-isolated Pod</h3>
+<p>By default, Pod non-isolated, they receive from any source.</p>
+<p>Pod can be isolated by the relevant network policy. Once the namespace has NetworkPolicy selected a specific Pod, the Pod will refuse to connect to the network strategy not allowed. (Other network policy is not selected Pod will continue to receive all the traffic in the namespace)</p>
+<h3 id="networkpolicy-resources">NetworkPolicy resources</h3>
+<p>Here is an example of a NetworkPolicy:</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 172.17.0.0/16
+        except:
+        - 172.17.1.0/24
+    - namespaceSelector:
+        matchLabels:
+          project: myproject
+    - podSelector:
+        matchLabels:
+          role: frontend
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 5978
+</code></pre>
+<p>Unless the Select Network solution supports NetworkPolicy, otherwise it will be sent to the above example APIServer no effect.</p>
+<p>spec: NetworkPolicy spec contains all the information needed to define a specific network policy in a namespace</p>
+<p>podSelector: Each NetworkPolicy comprises a podSelector, it is selected the group policy applies Pod. Because NetworkPolicy currently only supports ingress define rules for the policy is the definition of &quot;target pod&quot; on podSelector essence here. Strategies example with pod &quot;role = db&quot; tag. Empty podSelector select all pod under the namespace.</p>
+<p>policyTypes : Each NetworkPolicy policyTypes contains a list, which may contain Ingress, Egress or both. policyTypes field indicates whether a given policy applies to inbound traffic of the selected Pod, Pod outbound traffic from a selected, or both are applicable. If you do not specify any policyType on NetworkPolicy, the default is always set Ingress, and if NetworkPolicy have any export rules, then the Egress settings.</p>
+<p>ingress: List each NetworkPolicy ingress rule contains a white list. (Them) from the rule matching to allow simultaneous flow ports and portions. Example policy includes a simple rule: it matches a single Port, from one of two sources, the first specified by namespaceSelector, designated by the second podSelector.</p>
+<p>egress: a list of every NetworkPolicy egress rule contains a white list. Each rule allowed to match and flow port section. The example policy contains a rule that matches the traffic on a single port to any destination of 10.0.0.0/24.</p>
+<p>So, the example network policy:</p>
+<p>Under isolation &quot;default&quot; namespace &quot;role = db&quot; of the pod (if they are not already isolated words).<br>
+Allow pod with the &quot;role = frontend&quot; tag from the &quot;default&quot; namespace 6379 is connected to the TCP port of the pod &quot;default&quot; in the namespace.</p>
+<p>&quot;Default&quot; namespace, Pod labeled with any &quot;role = frontend&quot;; and<br>
+namespaces in the pod with any label &quot;project = myproject&quot;; and<br>
+172.17.0.0-172.17.0.255 range of IP addresses and<br>
+172.17.2.0-172.17.255.255 (i.e., all except 172.17.1.0/24 172.17.0.0/16) of<br>
+Allow with the &quot;project = myproject&quot; pod at any namespace tag 6379 is connected to the TCP port of the &quot;default&quot; under the name space pod.</p>
+<h3 id="selector-to-and-from-the-behavior">Selector to and from the behavior</h3>
+<p>Four kinds of selectors can be specified in the ingress from section to section or egress:</p>
+<p>podSelector: This selects a specific Pod NetworkPolicy with the same name space, the inlet should be permitted as a source or destination outlet.</p>
+<p>namespaceSelector: This selects a particular namespace, all Pod should be used as an input source or output destination.</p>
+<p>namespaceSelector and podSelector: a designated to namespaceSelector and the podSelector / from a particular entry selection namespace specific Pod. Note the use of the correct YAML syntax; this strategy:</p>
+<p>...<br>
+ingress:</p>
+<ul>
+<li>from:
+<ul>
+<li>namespaceSelector:<br>
+matchLabels:<br>
+user: alice<br>
+podSelector:<br>
+matchLabels:<br>
+role: client<br>
+...<br>
+From the array contains only one element, only marked role = client from the name space of the Pod Pod and labeled where user = alice connection. This strategy:</li>
+</ul>
+</li>
+</ul>
+<p>...<br>
+ingress:</p>
+<ul>
+<li>from:
+<ul>
+<li>namespaceSelector:<br>
+matchLabels:<br>
+user: alice</li>
+<li>podSelector:<br>
+matchLabels:<br>
+role: client<br>
+...<br>
+Contained in two elements from the array, from the local namespace allows marked role = Pod connection of the client, or from any namespace labeled user = alice any connection of the Pod.</li>
+</ul>
+</li>
+</ul>
+<p>ipBlock: This selects a particular IP CIDR range as an inlet or source outlet destinations. These should be outside the cluster IP, because time is short Pod IP presence and randomly generated.</p>
+<p>Inlet and outlet mechanisms usually need to rewrite the cluster IP source or destination IP packet. In the case of this happening, uncertainty occurs before or after NetworkPolicy processing and plug-ins for different combinations of networks, cloud providers, Service realization, the behavior may be different.</p>
+<p>In the case of entry, which means that in some cases, you can filter incoming packets based on the actual source of the original IP, while in other cases, NetworkPolicy the role of the IP source or it may be LoadBalancer Pod node Wait.</p>
+<p>For exports, which means that from the Pod to be rewritten as a cluster of Service IP connectivity to external IP may or may not be bound by the policy-based ipBlock.</p>
+<h3 id="the-default-policy">The default policy</h3>
+<p>By default, if there is no policy namespace, all traffic in and out of the namespace Pod will be allowed. The following example lets you change the default behavior of the name space.</p>
+<h3 id="default-deny-all-traffic-entry">Default deny all traffic entry</h3>
+<p>You can select all containers but not by creating any NetworkPolicy inlet flow into the container to create these &quot;default&quot; isolation strategy for the namespace.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+</code></pre>
+<p>This ensures that even if the container NetworkPolicy no other choice, it can still be isolated. This policy will not change the default behavior export isolation.</p>
+<p>The default allows all ingress traffic<br>
+If you want to allow all traffic entering all Pod a namespace (even if you add the policy causes some Pod is considered &quot;isolated&quot;), you can create a policy to explicitly permit all traffic to the namespace.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all
+spec:
+  podSelector: {}
+  ingress:
+  - {}
+  policyTypes:
+  - Ingress
+</code></pre>
+<p>Default Deny all export traffic<br>
+You can select all container exports but not by creating any traffic NetworkPolicy from these containers to create a &quot;default&quot; egress isolation strategy for the namespace.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+</code></pre>
+<p>This ensures that even if not any other choice NetworkPolicy Pod will not be allowed out of traffic. This policy will not change the default ingress isolation behavior.</p>
+<p>The default allows all export traffic<br>
+If you want to allow all traffic from the namespace of all Pod (even if you add a policy causes some Pod is considered &quot;isolated&quot; in), you can create a policy that explicitly permits all traffic exit the namespace.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all
+spec:
+  podSelector: {}
+  egress:
+  - {}
+  policyTypes:
+  - Egress
+</code></pre>
+<p>Default Deny all entry and exit of all traffic<br>
+You can create a &quot;default&quot; policy for the namespace, by creating the following NetworkPolicy in the namespace block all inbound and outbound traffic.</p>
+<pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+</code></pre>
+<p>This ensures that even if not any other choice NetworkPolicy Pod will not be allowed into or out of traffic.</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/VgFkcO-8l/" class="tag">
+                    Kubernetes
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/golang-learning-blog/">
+                  <h3 class="post-title">
+                    Golang Learning Blog List
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
