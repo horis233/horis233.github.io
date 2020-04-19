@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Play with Openshift 4 -- add admin user | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1587330640770">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Important
+This article is mainly applicable to use HTPasswd Identity Provider mechanism to verify username and password...." />
+    <meta name="keywords" content="Openshift" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1587330640770" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Play with Openshift 4 -- add admin user</h2>
+            <div class="post-date">2020-04-18</div>
+            
+              <div class="feature-container" style="background-image: url('https://images.unsplash.com/photo-1549015780-fff9fcb54ed8?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="important">Important</h2>
+<p>This article is mainly applicable to use HTPasswd Identity Provider mechanism to verify username and password.<br>
+Check whether OpenShift 4 has an HTPasswd Identity Provider (IDP).</p>
+<pre><code class="language-bash">$ oc get identity
+NAME IDP NAME IDP USER NAME USER NAME USER UID
+htpasswd_provider: admin htpasswd_provider admin admin e26157a0-1903-11ea-a73b-0a580a8000c9
+</code></pre>
+<p>If there is no HTPasswd Identity Provider in OpenShift 4 OAuth, you can refer to &quot;Play with Openshift 4 -- add HTPasswd authentication&quot; Creating an HTPasswd Identity Provider and adding users.<br>
+Make sure to install httpd-tools.</p>
+<pre><code class="language-bash">$ sudo yum -y install httpd-tools
+</code></pre>
+<p>Add administrator user<br>
+After installing the CodeReady Container based on OpenShift 4, there are only two users, kubeadmin and developer. We can increase the number of logged-in users through the following methods and give administrator rights.</p>
+<ol>
+<li>Log in with kubeadmin (that is, cluster administrator user), and then execute the command to obtain the Name of Htpasswd of Identity Providers (that is, htpass-secret in the following)</li>
+</ol>
+<pre><code class="language-yaml">[root@jiaming-inf ~]# oc describe oauth cluster
+Name:         cluster
+Namespace:    
+Labels:       &lt;none&gt;
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {&quot;apiVersion&quot;:&quot;config.openshift.io/v1&quot;,&quot;kind&quot;:&quot;OAuth&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;cluster&quot;},&quot;spec&quot;:{&quot;identityProviders&quot;:[{&quot;challe...
+              release.openshift.io/create-only: true
+API Version:  config.openshift.io/v1
+Kind:         OAuth
+Metadata:
+  Creation Timestamp:  2020-04-17T23:20:45Z
+  Generation:          2
+  Resource Version:    1174472
+  Self Link:           /apis/config.openshift.io/v1/oauths/cluster
+  UID:                 81f9920e-416e-43bd-95eb-3c0ceac061c5
+Spec:
+  Identity Providers:
+    Htpasswd:
+      File Data:
+        Name:        htpass-secret
+    Mapping Method:  claim
+    Name:            my_htpasswd_provider
+    Type:            HTPasswd
+Events:              &lt;none&gt;
+</code></pre>
+<ol start="2">
+<li>Export the user and password included in the htpass-secret in the existing OpenShift environment.</li>
+</ol>
+<pre><code class="language-bash">$ oc get secret htpass-secret -ojsonpath = {. data.htpasswd} -n openshift-config | base64 -d | tee htpasswd.txt
+</code></pre>
+<ol start="3">
+<li>Execute the command to add a user (admin / admin) to the file. Note: Each user is on a separate line when confirming the contents of the file! I encountered a situation where there was no line break when appending the first user, which can be solved manually.</li>
+</ol>
+<pre><code class="language-bash">$ htpasswd -b htpasswd.txt admin admin
+</code></pre>
+<ol start="4">
+<li>Adding password for user admin</li>
+</ol>
+<pre><code class="language-bash">[root@jiaming-inf ~]# cat htpasswd.txt 
+admin:$apr1$uitiuQon$TiX28LEYKUMuTND48V2711
+</code></pre>
+<ol start="5">
+<li>Import the user file password file into OpenShift.</li>
+</ol>
+<pre><code class="language-bash">$ oc create secret generic htpass-secret --from-file = htpasswd = htpasswd.txt --dry-run -o yaml -n openshift-config | oc replace -f-
+</code></pre>
+<p>At this time, you can also enter the openshift-config project in the OpenShift Console, then find htpass-secret from Workloads-&gt; Secrets, and then click Reveal Values ​​in the Data area to view the user name and encrypted password<br>
+<img src="https://jiaming-hu.com/post-images/1587329980463.png" alt="" loading="lazy"></p>
+<ol start="6">
+<li>Use kubeadmin to assign &quot;cluster administrator&quot; permissions to the newly created user.</li>
+</ol>
+<pre><code class="language-bash">$ oc adm policy add-cluster-role-to-user cluster-admin admin
+</code></pre>
+<ol start="7">
+<li>Use the new user to log in. Note: There may be a login failure (401 Unauthorized) when you log in immediately after creating the user. Wait a few minutes and execute it (this is because OpenShift converts the htpass-secret user to the OpenShift User object).</li>
+</ol>
+<pre><code class="language-bash">$ oc login -u admin -p admin
+</code></pre>
+<ol start="8">
+<li>Run the command to view the existing OpenShift User object (not an existing valid user. The difference between &quot;User&quot; and &quot;User Object&quot; is that if the user has never logged in to OpenShift, there will be no User object. After being deleted, the User object will not be deleted automatically).</li>
+</ol>
+<pre><code class="language-yaml">$ oc get users
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/9wGQUTvoW/" class="tag">
+                    Openshift
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/play-with-openshift-4-add-htpasswd-authentication/">
+                  <h3 class="post-title">
+                    Play with Openshift 4 -- add HTPasswd authentication
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
