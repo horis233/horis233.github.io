@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Play with Openshift 4 -- add HTPasswd authentication | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1587328544187">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="OpenShift authentication mechanism
+OpenShift implements user identity authentication through OAuth. Through the followin..." />
+    <meta name="keywords" content="Openshift" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1587328544187" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Play with Openshift 4 -- add HTPasswd authentication</h2>
+            <div class="post-date">2020-04-18</div>
+            
+              <div class="feature-container" style="background-image: url('https://images.unsplash.com/photo-1514613453913-ec5da0db2faa?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjI0MX0&amp;auto=format&amp;fit=crop&amp;w=2250&amp;q=80')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="openshift-authentication-mechanism">OpenShift authentication mechanism</h2>
+<p>OpenShift implements user identity authentication through OAuth. Through the following Identity Provider, OpenShift 4 supports multiple user identity authentication methods:</p>
+<ul>
+<li>HTPasswd (HTPasswd is a simplest user identity storage authentication mechanism, which directly puts the user name and encrypted password directly in a text file)</li>
+<li>Keystone</li>
+<li>LDAP</li>
+<li>Basic authentication</li>
+<li>Request header</li>
+<li>GitHub or GitHub Enterprise</li>
+<li>GitLab</li>
+<li>Google</li>
+<li>OpenID Connect</li>
+</ul>
+<h2 id="add-htpasswd-identity-provider">Add HTPasswd Identity Provider</h2>
+<p>After installing OpenShift 4, we can log in as the &quot;administrator&quot; user and then login to the console.</p>
+<p>If OpenShift has not configured the Identity Provider in HTPasswd mode, you can use the following methods to add.</p>
+<ol>
+<li>Create a Custom Resource file that defines HTPasswd Identity Provider. The name of the HTPasswd Identity Provider is &quot;my_htpasswd_provider&quot;, and OAuth uses a secret named &quot;htpass-secret&quot; to verify the username and password (in the following chapters, a &quot;users.htpasswd&quot; file will be created and then loaded into htpass-secret).</li>
+</ol>
+<pre><code class="language-yaml">apiVersion: config.openshift.io/v1
+kind: OAuth
+metadata:
+  name: cluster
+spec:
+  identityProviders:
+  - name: my_htpasswd_provider 
+    challenge: true 
+    login: true 
+    mappingMethod: claim 
+    type: HTPasswd
+    htpasswd:
+      fileData:
+        name: htpass-secret 
+</code></pre>
+<ol start="2">
+<li>Create HTPasswd Identity Provider named my_htpasswd_provider according to the htpassed-cr.yaml file.</li>
+</ol>
+<pre><code class="language-bash">oc apply -f htpassed-cr.yaml
+</code></pre>
+<h2 id="create-user-by-htpasswd">Create user by HTPasswd</h2>
+<ol>
+<li>Install httpd-tools<pre><code class="language-bash">yum install httpd-tools
+</code></pre>
+</li>
+<li>Write username (admin) and password (admin) into <code>users.htpasswd</code> file.<pre><code class="language-bash">htpasswd -c -B -b users.htpasswd admin admin
+</code></pre>
+</li>
+<li>You can check users.htpasswd, admin password has been encrypted<pre><code class="language-bash">cat users.htpasswd
+</code></pre>
+</li>
+</ol>
+<h2 id="add-usershtpasswd-data-into-secret">Add users.htpasswd data into secret</h2>
+<p>OpenShift uses the Secret object to save encrypted data, so we need to load the users and passwords in the users.htpasswd file into the Secret object so that my_htpasswd_provider can use them for identity authentication.</p>
+<ol>
+<li>Load users.htpasswd into the secret object named htpass-secret.</li>
+</ol>
+<pre><code class="language-bash">$ oc create secret generic htpass-secret --from-file = htpasswd = users.htpasswd -n openshift-config
+</code></pre>
+<ol start="2">
+<li>You can also log in to the OpenShift Console, enter the openshift-config project, and then find htpass-secret, you can view the user information it loads.</li>
+</ol>
+<h2 id="verification">verification</h2>
+<p>Finally, log in and verify with admin / admin.</p>
+<pre><code class="language-bash">oc login -u admin -p admin
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/9wGQUTvoW/" class="tag">
+                    Openshift
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-9-or-isolated-from-the-network-to-allow-access-to-a-b-c-is-not-allowed-to-access-b-how-to-do-it-k8s-access-control-rbac-role-rolebinding-and-lead-serviceaccount/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day 9 | (isolated from the network) to allow access to A B, C is not allowed to access B, how to do it
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
