@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-04-19T21:10:53.128Z</updated>
+    <updated>2020-04-23T01:22:20.347Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -10,6 +10,221 @@
     <logo>https://jiaming-hu.com/images/avatar.png</logo>
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 10 | k8s access control RBAC, Role, RoleBinding, and leads to kubectl common commands]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-questions-day-10-or-k8s-access-control-rbac-role-rolebinding-and-leads-to-kubectl-common-commands/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-questions-day-10-or-k8s-access-control-rbac-role-rolebinding-and-leads-to-kubectl-common-commands/">
+        </link>
+        <updated>2020-04-20T13:21:26.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="question">Question</h2>
+<p>Create a Role (only all operation permissions of pods in the cka namespace) and RoleBinding (use serviceaccount authentication and authentication), use the corresponding serviceaccount as authentication information to operate on pods in the cka namespace and operations on pods in the default namespace.</p>
+<p>– The names of Role and RoleBinding are cka-1202-role, cka-1202-rb<br>
+Note: Please attach the complete yaml of the used command, the created Role, RoleBinding and serviceaccount, which can be divided into multiple comments.</p>
+<h2 id="answer">Answer</h2>
+<p>To create a Service Account:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create serviceaccount cka-1202-sa -n cka  -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:37:42Z&quot;
+  name: cka-1202-sa
+  namespace: cka
+  resourceVersion: &quot;15159020&quot;
+  selfLink: /api/v1/namespaces/cka/serviceaccounts/cka-1202-sa
+  uid: 6764e90c-cb28-4de1-9109-6e3d56941fcb
+</code></pre>
+<p>Create Role:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create role  cka-1202-role -n cka  --verb=* --resource=pods -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:40:26Z&quot;
+  name: cka-1202-role
+  namespace: cka
+  resourceVersion: &quot;15159247&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/roles/cka-1202-role
+  uid: fc2c5593-2fd9-46d7-a809-99bcee32249e
+rules:
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - pods
+  verbs:
+  - '*'
+</code></pre>
+<p>To create RoleBinding:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create rolebinding cka-1202-rb -n cka  --role=cka-1202-role --serviceaccount=cka:cka-1202-sa  -oyaml 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:46:50Z&quot;
+  name: cka-1202-rb
+  namespace: cka
+  resourceVersion: &quot;15159794&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/rolebindings/cka-1202-rb
+  uid: c00d104e-a531-4781-90f4-2821651492bf
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cka-1202-role
+subjects:
+- kind: ServiceAccount
+  name: cka-1202-sa
+  namespace: cka
+</code></pre>
+<p>Verification:</p>
+<p>Get the secret of Service Account binding cka-1202-sa and base64-d decode the token field:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl get secret -n cka   
+NAME                      TYPE                                  DATA   AGE
+cka-1202-sa-token-9rgp4   kubernetes.io/service-account-token   3      42m
+default-token-r77xn       kubernetes.io/service-account-token   3      4d14h
+[root@liabio ~]# kubectl get secret -n cka  cka-1202-sa-token-9rgp4 -ojson | jq .data.token 
+&quot;ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklpSjkuZXlKcGMzTWlPaUpyZFdKbGNtNWxkR1Z6TDNObGNuWnBZMlZoWTJOdmRXNTBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5dVlXMWxjM0JoWTJVaU9pSmphMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxZM0psZEM1dVlXMWxJam9pWTJ0aExURXlNREl0YzJFdGRHOXJaVzR0T1hKbmNEUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObGNuWnBZMlV0WVdOamIzVnVkQzV1WVcxbElqb2lZMnRoTFRFeU1ESXRjMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxjblpwWTJVdFlXTmpiM1Z1ZEM1MWFXUWlPaUkyTnpZMFpUa3dZeTFqWWpJNExUUmtaVEV0T1RFd09TMDJaVE5rTlRZNU5ERm1ZMklpTENKemRXSWlPaUp6ZVhOMFpXMDZjMlZ5ZG1salpXRmpZMjkxYm5RNlkydGhPbU5yWVMweE1qQXlMWE5oSW4wLnFXanJUcTdEbVZTU01TM0h4YzR0bFd4ODdUNGtvUkNvVmkxMjVzZXNWRWJ2QUtEaTJ6MFhvNjJaNzAza2htQ1dsWTU1TkxPYWVKS2taWXhYOWZMTEdYMnpPVWVFdzFvbUpmRkZpTm41NGxjOUhRTjlRXzVmTjRyYS1WNFZSaU5uQkFUeW43Yzc2aGk2Nks1aUh5WjB4bFRNcnBNQThXN1l2TmJnU1pIOXhnaFdSenpkSElKYWF1UXBTY0xtSk5MNmxGNGd5ZG9Xd0dDQy1QU0VjdGpKTkRtMF8zSTZoUkhEZkJzd3k2d0t4VGx4T3lIdE9yeUc0ckUzZzVqUWZOdV9BNTdTNVlocmEwWVM0emM0X0RvdXBmUC1zVjU3R0FQS1JxODZsRGdlOHo4cWFIaDRyb0k3RTNJbC1DRU9HS1JJeE52SWZVX3d0aHRrMG95aW5HR2wydw==&quot;
+[root@liabio ~]# echo ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklpSjkuZXlKcGMzTWlPaUpyZFdKbGNtNWxkR1Z6TDNObGNuWnBZMlZoWTJOdmRXNTBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5dVlXMWxjM0JoWTJVaU9pSmphMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxZM0psZEM1dVlXMWxJam9pWTJ0aExURXlNREl0YzJFdGRHOXJaVzR0T1hKbmNEUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObGNuWnBZMlV0WVdOamIzVnVkQzV1WVcxbElqb2lZMnRoTFRFeU1ESXRjMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxjblpwWTJVdFlXTmpiM1Z1ZEM1MWFXUWlPaUkyTnpZMFpUa3dZeTFqWWpJNExUUmtaVEV0T1RFd09TMDJaVE5rTlRZNU5ERm1ZMklpTENKemRXSWlPaUp6ZVhOMFpXMDZjMlZ5ZG1salpXRmpZMjkxYm5RNlkydGhPbU5yWVMweE1qQXlMWE5oSW4wLnFXanJUcTdEbVZTU01TM0h4YzR0bFd4ODdUNGtvUkNvVmkxMjVzZXNWRWJ2QUtEaTJ6MFhvNjJaNzAza2htQ1dsWTU1TkxPYWVKS2taWXhYOWZMTEdYMnpPVWVFdzFvbUpmRkZpTm41NGxjOUhRTjlRXzVmTjRyYS1WNFZSaU5uQkFUeW43Yzc2aGk2Nks1aUh5WjB4bFRNcnBNQThXN1l2TmJnU1pIOXhnaFdSenpkSElKYWF1UXBTY0xtSk5MNmxGNGd5ZG9Xd0dDQy1QU0VjdGpKTkRtMF8zSTZoUkhEZkJzd3k2d0t4VGx4T3lIdE9yeUc0ckUzZzVqUWZOdV9BNTdTNVlocmEwWVM0emM0X0RvdXBmUC1zVjU3R0FQS1JxODZsRGdlOHo4cWFIaDRyb0k3RTNJbC1DRU9HS1JJeE52SWZVX3d0aHRrMG95aW5HR2wydw== | base64 -d
+eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJja2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiY2thLTEyMDItc2EtdG9rZW4tOXJncDQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2thLTEyMDItc2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NzY0ZTkwYy1jYjI4LTRkZTEtOTEwOS02ZTNkNTY5NDFmY2IiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6Y2thOmNrYS0xMjAyLXNhIn0.qWjrTq7DmVSSMS3Hxc4tlWx87T4koRCoVi125sesVEbvAKDi2z0Xo62Z703khmCWlY55NLOaeJKkZYxX9fLLGX2zOUeEw1omJfFFiNn54lc9HQN9Q_5fN4ra-V4VRiNnBATyn7c76hi66K5iHyZ0xlTMrpMA8W7YvNbgSZH9xghWRzzdHIJaauQpScLmJNL6lF4gydoWwGCC-PSEctjJNDm0_3I6hRHDfBswy6wKxTlxOyHtOryG4rE3g5jQfNu_A57S5Yhra0YS4zc4_DoupfP-sV57GAPKRq86lDge8z8qaHh4roI7E3Il-CEOGKRIxNvIfU_wthtk0oyinGGl2w[root@liabio ~]#
+</code></pre>
+<p>Add the decoded information to ~ /. kube/config, and notice that the context with name as codeaction and the user with name as codeaction are added below</p>
+<pre><code class="language-yaml">apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDLQo=
+    server: https://10.0.0.0:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: coderaction
+  name: coderaction
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: coderaction
+  user:
+    token: eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJja2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiY2thLTEyMDItc2EtdG9rZW4tOXJncDQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2thLTEyMDItc2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NzY0ZTkwYy1jYjI4LTRkZTEtOTEwOS02ZTNkNTY5NDFmY2IiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6Y2thOmNrYS0xMjAyLXNhIn0.qWjrTq7DmVSSMS3Hxc4tlWx87T4koRCoVi125sesVEbvAKDi2z0Xo62Z703khmCWlY55NLOaeJKkZYxX9fLLGX2zOUeEw1omJfFFiNn54lc9HQN9Q_5fN4ra-V4VRiNnBATyn7c76hi66K5iHyZ0xlTMrpMA8W7YvNbgSZH9xghWRzzdHIJaauQpScLmJNL6lF4gydoWwGCC-PSEctjJNDm0_3I6hRHDfBswy6wKxTlxOyHtOryG4rE3g5jQfNu_A57S5Yhra0YS4zc4_DoupfP-sV57GAPKRq86lDge8z8qaHh4roI7E3Il-CEOGKRIxNvIfU_wthtk0oyinGGl2w
+- name: kubernetes-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiB1M1Y2NDTnpPUT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    client-key-data: LS0tLS1CBS0NBUUVBdjNpTkx5eUEwaVdmOU1hUjA3cVFTOEtFWS0tLS0tCg==
+</code></pre>
+<p>By switching to the use context of coding, you can find that when you get the Pod under the default partition, you will be prompted that system:serviceaccount:cka:cka-1202-sa does not have permission, but you can get the Pods under the cka namespace normally</p>
+<pre><code class="language-shell">[root@liabio cka]# kubectl config use-context kubernetes-admin@kubernetes
+Switched to context &quot;kubernetes-admin@kubernetes&quot;.
+[root@liabio cka]# kubectl get pod
+NAME                               READY   STATUS    RESTARTS   AGE
+cka-1128-01-7b8b8cb79-mll6d        1/1     Running   118        32h
+[root@liabio cka]# 
+[root@liabio cka]# 
+[root@liabio cka]# kubectl get node
+NAME     STATUS   ROLES    AGE    VERSION
+liabio   Ready    master   141d   v1.15.2
+[root@liabio cka]# kubectl config use-context coderaction
+Switched to context &quot;coderaction&quot;.
+[root@liabio cka]# kubectl get pod
+Error from server (Forbidden): pods is forbidden: User &quot;system:serviceaccount:cka:cka-1202-sa&quot; cannot list resource &quot;pods&quot; in API group &quot;&quot; in the namespace &quot;default&quot;
+[root@liabio cka]# kubectl get pod -n cka
+No resources found.
+</code></pre>
+<h2 id="analysis">Analysis</h2>
+<p>k8s provides two security steps for accessing API: authentication and authorization. Authentication solves the problem of who the user is, and authorization solves the problem of what the user can do. Through reasonable authority management, it can ensure the security and reliability of the system.</p>
+<p>All operations of k8s cluster are basically carried out through Kube API server, which provides HTTP RESTful API for clients inside and outside the cluster to call. It should be noted that the authentication and authorization process only exists in the API in the form of HTTPS. In other words, if the client uses HTTP to connect to the Kube API server, the authentication and authorization will not be performed. Therefore, it can be set as follows: http is used for communication between components inside the cluster, and HTTPS is used outside the cluster, which not only increases security, but also is not too complex.</p>
+<p>This paper mainly studies authorization: RBAC.</p>
+<p>RBAC official documents: https://kubernetes.io/docs/reference/access-authn-authz/rbac/</p>
+<p>Instructions for creating RoleBinding, Role, and Service Account official websites: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-rolebinding-em-</p>
+<p>Use the kubeconfig file to organize cluster access: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/</p>
+<p>Official command guide for context related operations: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#config</p>
+<p>Role based access control (RBAC) is a method to adjust access to computer or network resources based on the roles of users in the enterprise.</p>
+<p>RBAC uses the rbac.authorization.k8s.io API Group to drive authorization decisions, enabling administrators to dynamically configure policies through the Kubernetes API.</p>
+<p>Starting from 1.8, RBAC mode is stable and supported by rbac.authorization.k8s.io/v1 API.</p>
+<p>To enable RBAC, start apiserver -- authorization mode = RBAC</p>
+<p>The RBAC API declares four top-level types:</p>
+<p>Role and ClusterRole<br>
+In the RBAC API, a Role contains rules that represent a set of permissions. Permissions are purely cumulative (no &quot;deny&quot; rule). You can use Role in namespace or ClusterRole in cluster scope.</p>
+<p>Role can only be used to grant access to resources within a single namespace.</p>
+<p>Clusterroles because they are cluster wide, they can also be used to grant the following permissions:</p>
+<p>Cluster wide resources (such as nodes)<br>
+Non resource endpoint (for example &quot;/ health Hz&quot;)<br>
+namespace resources (such as pod) in all namespaces<br>
+RoleBinding and ClusterRoleBinding<br>
+RoleBinding grants permissions defined in Role to one or a Group of users. It contains subjects (User, Group, or Service Account) and references to the granted roles. You can use RoleBinding in namespace or ClusterRoleBinding in cluster scope.</p>
+<p>Role binding can refer to roles under the same namespace.</p>
+<p>roleRef is how the binding is actually created. The kind can be Role or ClusterRole, and name will refer to the Role or ClusterRole with specific name</p>
+<p>ClusterRoleBinding can grant permissions at the cluster level and in all namespace s.</p>
+<p>Create Role command:</p>
+<pre><code class="language-shell">kubectl create role NAME --verb=verb --resource=resource.group/subresource [--resource-name=resourcename] [--dry-run]
+</code></pre>
+<p>--verb specifies the collection of operation actions for resources, including get, delete, update, create, patch, watch, and list. All operation actions are* --Resource specifies the set of actionable resource types; --Resource name specifies the set of actionable resource names; Such as:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl create role pod-reader-cka -n cka  --verb=get --verb=list --resource=pods --resource-name=readablepod --resource-name=anotherpod -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: &quot;2019-12-03T03:50:34Z&quot;
+  name: pod-reader-cka
+  namespace: cka
+  resourceVersion: &quot;15179947&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/roles/pod-reader-cka
+  uid: 16742721-4890-43de-9725-d6c721c6e4cf
+rules:
+- apiGroups:
+  - &quot;&quot;
+  resourceNames:
+  - readablepod
+  - anotherpod
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+</code></pre>
+<p>Create RoleBinding</p>
+<pre><code class="language-shell">kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=username] [--group=groupname] [--serviceaccount=namespace:serviceaccountname] [--dry-run]
+</code></pre>
+<p>--Role specifies the role name in roleRef of RoleBinding; --ClusterRole specifies the ClusterRole name in roleRef of RoleBinding; --serviceaccount specifies the subjects collection of RoleBinding; --User specifies the name of user under subjects of RoleBinding; Such as:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl create rolebinding admin-cka -n cka --clusterrole=admin --user=user1 --user=user2 --group=group1 -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: &quot;2019-12-03T03:47:55Z&quot;
+  name: admin-cka
+  namespace: cka
+  resourceVersion: &quot;15179732&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/rolebindings/admin-cka
+  uid: 4d4eacfb-3ba0-4fa1-96c3-c624fbafb12c
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: user1
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: user2
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: group1
+</code></pre>
+<p>Create ServiceAccount<br>
+kubectl create serviceaccount NAME [--dry-run]<br>
+Such as:</p>
+<pre><code class="language-shell">[root@liabio cka]# kubectl create serviceaccount cka-1202-sa -n cka  -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:37:42Z&quot;
+  name: cka-1202-sa
+  namespace: cka
+  resourceVersion: &quot;15159020&quot;
+  selfLink: /api/v1/namespaces/cka/serviceaccounts/cka-1202-sa
+  uid: 6764e90c-cb28-4de1-9109-6e3d56941fcb
+</code></pre>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Play with Openshift 4 -- add admin user]]></title>
         <id>https://jiaming-hu.com/post/play-with-openshift-4-add-admin-user/</id>
@@ -1062,129 +1277,6 @@ Can be packaged into its own scheduler;</p>
 Until version 1.11, the pods of DaemonSet were scheduled by scheduler before being introduced as alpha features</p>
 </li>
 </ul>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day 3 | Proficiency in kubectl commands for creating resource objects and analyzing from source code]]></title>
-        <id>https://jiaming-hu.com/post/kubernetes-question-day3/</id>
-        <link href="https://jiaming-hu.com/post/kubernetes-question-day3/">
-        </link>
-        <updated>2020-04-04T21:58:16.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="question">Question</h2>
-<p>Create a deployment and expose Service with a single command. The deployment and service name is cka-1120, using nginx image, deployment has 2 pods</p>
-<h2 id="answer">Answer</h2>
-<pre><code>[root@liabio ~]# kubectl run  cka-1120 --replicas 2 --expose=true --port=80 --image=nginx
-
-kubectl run --generator=deployment/apps.v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
-service/cka-1120 created
-deployment.apps/cka-1120 created
-
-[root@liabio ~]# kubectl get all | grep cka-1120
-pod/cka-1120-554b9c4798-7jcrb   1/1 Running 0118m
-pod/cka-1120-554b9c4798-fpjwj   1/1 Running 0118m
-service/cka-1120  ClusterIP 10.108.140.25 &lt;none&gt; 80/TCP           118m
-deployment.apps/cka-11202/222118m
- 
-</code></pre>
-<p>The official website provides detailed kubectl usage, located under REFERENCE-&gt;kubectl CLI-&gt;kubectl Commands tab.<br>
-https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#run</p>
-<p>Command <code>kubectl run</code> will create a <code>deployment</code> or <code>job</code> to manage Pods. The command syntax is as follows:</p>
-<pre><code>kubectl run NAME --image=image [--env=&quot;key=value&quot;] [--port=port] [--replicas=replicas] [--dry-run=bool] [--overrides=inline-json] [--command] -- [COMMAND] [args...]
-</code></pre>
-<p>NAME specifies the name of deployment and service;</p>
-<p>--replicas abbreviation -r, specify the number of instances, the default is 1;</p>
-<p>--expose if true, will create a ClusterIP service, the default is false;</p>
-<p>--port indicates the port exposed by the container. If expose is true, the port is also the service port;</p>
-<p>--image specifies the image used by the container;</p>
-<p>--dry-run is true, only print the object to be sent, and not send it, the default is false.</p>
-<p>Create a deployment named cka-1120-01 with environment variables</p>
-<pre><code>kubectl run cka-1120-01 --image=nginx --env=&quot;DNS_DOMAIN=cluster.local&quot; --env=&quot;POD_NAMESPACE=default&quot;
-</code></pre>
-<p>Create a deployment named cka-1120-02 with label</p>
-<pre><code>kubectl run cka-1120-02 --image=nginx --labels=&quot;app=nginx,env=prod&quot;
-</code></pre>
-<p>There is also a <code>--restart</code> parameter, the default is Always, if set to OnFailure, the job will be created; if set to Never, the ordinary Pod will be created.</p>
-<pre><code>kubectl run cka-1120-03 --image=nginx --restart=OnFailure
-
-kubectl run --generator=job/v1 is DEPRECATED and will be removed in a future version. Use kubectl run --generator=run-pod/v1 or kubectl create instead.
-job.batch/cka-1120-03 created
-</code></pre>
-<pre><code>kubectl run cka-1120-04 --image=nginx --restart=Never
-
-pod/cka-1120-04 created
-</code></pre>
-<p><code>--schedule</code> specifies the timing rule of cronjob, if this parameter is specified, cronjob will be created.</p>
-<pre><code>kubectl run pi --schedule=&quot;0/5 * * * ?&quot; --image=perl --restart=OnFailure -- perl -Mbignum=bpi -wle 'print bpi(2000)'
-
-cronjob.batch/pi created
-</code></pre>
-<p>Currently, it is not supported to directly create resource objects such as Statefulset and Daemonset.</p>
-<p><strong>What happens after kubectl run is executed?</strong></p>
-<p>https://github.com/kubernetes/kubernetes/blob/master/cmd/clicheck/check_cli_conventions.go</p>
-<pre><code>func main() {
-	var errorCount int
-
-	kubectl := cmd.NewKubectlCommand(os.Stdin, ioutil.Discard, ioutil.Discard)
-	errors := cmdsanity.RunCmdChecks(kubectl, cmdsanity.AllCmdChecks, []string{})
-	for _, err := range errors {
-		errorCount++
-		fmt.Fprintf(os.Stderr, &quot;     %d. %s\n&quot;, errorCount, err)
-	}
-</code></pre>
-<p><code>cmd.NewKubectlCommand</code> is to build <code>kubectl</code> and its sub-command line parameters. The final code to execute the business logic is under the &quot;pkg\kubectl&quot; package. Different subcommands: apply, run, create entry corresponding to &quot;pkg\kubectl\cmd&quot;<br>
-https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/kubectl/pkg/cmd/run/run.go</p>
-<pre><code>func NewCmdRun(f cmdutil.Factory, streams genericclioptions.IOStreams) *cobra.Command {
-	o := NewRunOptions(streams)
-
-	cmd := &amp;cobra.Command{
-		Use:                   &quot;run NAME --image=image [--env=\&quot;key=value\&quot;] [--port=port] [--dry-run=server|client] [--overrides=inline-json] [--command] -- [COMMAND] [args...]&quot;,
-		DisableFlagsInUseLine: true,
-		Short:                 i18n.T(&quot;Run a particular image on the cluster&quot;),
-		Long:                  runLong,
-		Example:               runExample,
-		Run: func(cmd *cobra.Command, args []string) {
-			cmdutil.CheckErr(o.Complete(f, cmd))
-			cmdutil.CheckErr(o.Run(f, cmd, args))
-		},
-	}
-</code></pre>
-<p><code>o.Run(f, cmd, args)</code> will perform a series of checks on the parameters passed by kubectl run, filled with default values</p>
-<pre><code>	var createdObjects = []*RunObject{}
-	runObject, err := o.createGeneratedObject(f, cmd, generator, names, params, cmdutil.GetFlagString(cmd, &quot;overrides&quot;), namespace)
-	if err != nil {
-		return err
-	}
-	createdObjects = append(createdObjects, runObject)
-
-	allErrs := []error{}
-	if o.Expose {
-		serviceGenerator := cmdutil.GetFlagString(cmd, &quot;service-generator&quot;)
-		if len(serviceGenerator) == 0 {
-			return cmdutil.UsageErrorf(cmd, &quot;No service generator specified&quot;)
-		}
-		serviceRunObject, err := o.generateService(f, cmd, serviceGenerator, params, namespace)
-		if err != nil {
-			allErrs = append(allErrs, err)
-		} else {
-			createdObjects = append(createdObjects, serviceRunObject)
-		}
-	}
-</code></pre>
-<p><code>o.generateService</code> Generate deployment, cronjob, job, pod and other resource objects according to different generators, and send creation requests to apiserver.</p>
-<p>If expose is set to true, the same call o.createGeneratedObject is used to generate and create a service.</p>
-<pre><code>func (o *RunOptions) createGeneratedObject(f cmdutil.Factory, cmd *cobra.Command, generator generate.Generator, names []generate.GeneratorParam, params map[string]interface{}, overrides, namespace string) (*RunObject, error) {
-	err := generate.ValidateParams(names, params)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: Validate flag usage against selected generator. More tricky since --expose was added.
-	obj, err := generator.Generate(params)
-	if err != nil {
-		return nil, err
-	}
-</code></pre>
-<p><code>generator.Generate(params)</code> generates different resource objects according to different generator implementations.</p>
 ]]></content>
     </entry>
 </feed>

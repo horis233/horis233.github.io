@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day 10 | k8s access control RBAC, Role, RoleBinding, and leads to kubectl common commands | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1587604935867">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Create a Role (only all operation permissions of pods in the cka namespace) and RoleBinding (use serviceaccount..." />
+    <meta name="keywords" content="Kubernetes" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1587604935867" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day 10 | k8s access control RBAC, Role, RoleBinding, and leads to kubectl common commands</h2>
+            <div class="post-date">2020-04-20</div>
+            
+              <div class="feature-container" style="background-image: url('https://images.unsplash.com/photo-1587469677297-c500c13d4b22?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=2167&amp;q=80')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Create a Role (only all operation permissions of pods in the cka namespace) and RoleBinding (use serviceaccount authentication and authentication), use the corresponding serviceaccount as authentication information to operate on pods in the cka namespace and operations on pods in the default namespace.</p>
+<p>– The names of Role and RoleBinding are cka-1202-role, cka-1202-rb<br>
+Note: Please attach the complete yaml of the used command, the created Role, RoleBinding and serviceaccount, which can be divided into multiple comments.</p>
+<h2 id="answer">Answer</h2>
+<p>To create a Service Account:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create serviceaccount cka-1202-sa -n cka  -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:37:42Z&quot;
+  name: cka-1202-sa
+  namespace: cka
+  resourceVersion: &quot;15159020&quot;
+  selfLink: /api/v1/namespaces/cka/serviceaccounts/cka-1202-sa
+  uid: 6764e90c-cb28-4de1-9109-6e3d56941fcb
+</code></pre>
+<p>Create Role:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create role  cka-1202-role -n cka  --verb=* --resource=pods -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:40:26Z&quot;
+  name: cka-1202-role
+  namespace: cka
+  resourceVersion: &quot;15159247&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/roles/cka-1202-role
+  uid: fc2c5593-2fd9-46d7-a809-99bcee32249e
+rules:
+- apiGroups:
+  - &quot;&quot;
+  resources:
+  - pods
+  verbs:
+  - '*'
+</code></pre>
+<p>To create RoleBinding:</p>
+<pre><code class="language-yaml">[root@liabio cka]# kubectl create rolebinding cka-1202-rb -n cka  --role=cka-1202-role --serviceaccount=cka:cka-1202-sa  -oyaml 
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:46:50Z&quot;
+  name: cka-1202-rb
+  namespace: cka
+  resourceVersion: &quot;15159794&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/rolebindings/cka-1202-rb
+  uid: c00d104e-a531-4781-90f4-2821651492bf
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cka-1202-role
+subjects:
+- kind: ServiceAccount
+  name: cka-1202-sa
+  namespace: cka
+</code></pre>
+<p>Verification:</p>
+<p>Get the secret of Service Account binding cka-1202-sa and base64-d decode the token field:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl get secret -n cka   
+NAME                      TYPE                                  DATA   AGE
+cka-1202-sa-token-9rgp4   kubernetes.io/service-account-token   3      42m
+default-token-r77xn       kubernetes.io/service-account-token   3      4d14h
+[root@liabio ~]# kubectl get secret -n cka  cka-1202-sa-token-9rgp4 -ojson | jq .data.token 
+&quot;ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklpSjkuZXlKcGMzTWlPaUpyZFdKbGNtNWxkR1Z6TDNObGNuWnBZMlZoWTJOdmRXNTBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5dVlXMWxjM0JoWTJVaU9pSmphMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxZM0psZEM1dVlXMWxJam9pWTJ0aExURXlNREl0YzJFdGRHOXJaVzR0T1hKbmNEUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObGNuWnBZMlV0WVdOamIzVnVkQzV1WVcxbElqb2lZMnRoTFRFeU1ESXRjMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxjblpwWTJVdFlXTmpiM1Z1ZEM1MWFXUWlPaUkyTnpZMFpUa3dZeTFqWWpJNExUUmtaVEV0T1RFd09TMDJaVE5rTlRZNU5ERm1ZMklpTENKemRXSWlPaUp6ZVhOMFpXMDZjMlZ5ZG1salpXRmpZMjkxYm5RNlkydGhPbU5yWVMweE1qQXlMWE5oSW4wLnFXanJUcTdEbVZTU01TM0h4YzR0bFd4ODdUNGtvUkNvVmkxMjVzZXNWRWJ2QUtEaTJ6MFhvNjJaNzAza2htQ1dsWTU1TkxPYWVKS2taWXhYOWZMTEdYMnpPVWVFdzFvbUpmRkZpTm41NGxjOUhRTjlRXzVmTjRyYS1WNFZSaU5uQkFUeW43Yzc2aGk2Nks1aUh5WjB4bFRNcnBNQThXN1l2TmJnU1pIOXhnaFdSenpkSElKYWF1UXBTY0xtSk5MNmxGNGd5ZG9Xd0dDQy1QU0VjdGpKTkRtMF8zSTZoUkhEZkJzd3k2d0t4VGx4T3lIdE9yeUc0ckUzZzVqUWZOdV9BNTdTNVlocmEwWVM0emM0X0RvdXBmUC1zVjU3R0FQS1JxODZsRGdlOHo4cWFIaDRyb0k3RTNJbC1DRU9HS1JJeE52SWZVX3d0aHRrMG95aW5HR2wydw==&quot;
+[root@liabio ~]# echo ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklpSjkuZXlKcGMzTWlPaUpyZFdKbGNtNWxkR1Z6TDNObGNuWnBZMlZoWTJOdmRXNTBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5dVlXMWxjM0JoWTJVaU9pSmphMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxZM0psZEM1dVlXMWxJam9pWTJ0aExURXlNREl0YzJFdGRHOXJaVzR0T1hKbmNEUWlMQ0pyZFdKbGNtNWxkR1Z6TG1sdkwzTmxjblpwWTJWaFkyTnZkVzUwTDNObGNuWnBZMlV0WVdOamIzVnVkQzV1WVcxbElqb2lZMnRoTFRFeU1ESXRjMkVpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxjblpwWTJVdFlXTmpiM1Z1ZEM1MWFXUWlPaUkyTnpZMFpUa3dZeTFqWWpJNExUUmtaVEV0T1RFd09TMDJaVE5rTlRZNU5ERm1ZMklpTENKemRXSWlPaUp6ZVhOMFpXMDZjMlZ5ZG1salpXRmpZMjkxYm5RNlkydGhPbU5yWVMweE1qQXlMWE5oSW4wLnFXanJUcTdEbVZTU01TM0h4YzR0bFd4ODdUNGtvUkNvVmkxMjVzZXNWRWJ2QUtEaTJ6MFhvNjJaNzAza2htQ1dsWTU1TkxPYWVKS2taWXhYOWZMTEdYMnpPVWVFdzFvbUpmRkZpTm41NGxjOUhRTjlRXzVmTjRyYS1WNFZSaU5uQkFUeW43Yzc2aGk2Nks1aUh5WjB4bFRNcnBNQThXN1l2TmJnU1pIOXhnaFdSenpkSElKYWF1UXBTY0xtSk5MNmxGNGd5ZG9Xd0dDQy1QU0VjdGpKTkRtMF8zSTZoUkhEZkJzd3k2d0t4VGx4T3lIdE9yeUc0ckUzZzVqUWZOdV9BNTdTNVlocmEwWVM0emM0X0RvdXBmUC1zVjU3R0FQS1JxODZsRGdlOHo4cWFIaDRyb0k3RTNJbC1DRU9HS1JJeE52SWZVX3d0aHRrMG95aW5HR2wydw== | base64 -d
+eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJja2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiY2thLTEyMDItc2EtdG9rZW4tOXJncDQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2thLTEyMDItc2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NzY0ZTkwYy1jYjI4LTRkZTEtOTEwOS02ZTNkNTY5NDFmY2IiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6Y2thOmNrYS0xMjAyLXNhIn0.qWjrTq7DmVSSMS3Hxc4tlWx87T4koRCoVi125sesVEbvAKDi2z0Xo62Z703khmCWlY55NLOaeJKkZYxX9fLLGX2zOUeEw1omJfFFiNn54lc9HQN9Q_5fN4ra-V4VRiNnBATyn7c76hi66K5iHyZ0xlTMrpMA8W7YvNbgSZH9xghWRzzdHIJaauQpScLmJNL6lF4gydoWwGCC-PSEctjJNDm0_3I6hRHDfBswy6wKxTlxOyHtOryG4rE3g5jQfNu_A57S5Yhra0YS4zc4_DoupfP-sV57GAPKRq86lDge8z8qaHh4roI7E3Il-CEOGKRIxNvIfU_wthtk0oyinGGl2w[root@liabio ~]#
+</code></pre>
+<p>Add the decoded information to ~ /. kube/config, and notice that the context with name as codeaction and the user with name as codeaction are added below</p>
+<pre><code class="language-yaml">apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDLQo=
+    server: https://10.0.0.0:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: coderaction
+  name: coderaction
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: coderaction
+  user:
+    token: eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJja2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoiY2thLTEyMDItc2EtdG9rZW4tOXJncDQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoiY2thLTEyMDItc2EiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI2NzY0ZTkwYy1jYjI4LTRkZTEtOTEwOS02ZTNkNTY5NDFmY2IiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6Y2thOmNrYS0xMjAyLXNhIn0.qWjrTq7DmVSSMS3Hxc4tlWx87T4koRCoVi125sesVEbvAKDi2z0Xo62Z703khmCWlY55NLOaeJKkZYxX9fLLGX2zOUeEw1omJfFFiNn54lc9HQN9Q_5fN4ra-V4VRiNnBATyn7c76hi66K5iHyZ0xlTMrpMA8W7YvNbgSZH9xghWRzzdHIJaauQpScLmJNL6lF4gydoWwGCC-PSEctjJNDm0_3I6hRHDfBswy6wKxTlxOyHtOryG4rE3g5jQfNu_A57S5Yhra0YS4zc4_DoupfP-sV57GAPKRq86lDge8z8qaHh4roI7E3Il-CEOGKRIxNvIfU_wthtk0oyinGGl2w
+- name: kubernetes-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiB1M1Y2NDTnpPUT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+    client-key-data: LS0tLS1CBS0NBUUVBdjNpTkx5eUEwaVdmOU1hUjA3cVFTOEtFWS0tLS0tCg==
+</code></pre>
+<p>By switching to the use context of coding, you can find that when you get the Pod under the default partition, you will be prompted that system:serviceaccount:cka:cka-1202-sa does not have permission, but you can get the Pods under the cka namespace normally</p>
+<pre><code class="language-shell">[root@liabio cka]# kubectl config use-context kubernetes-admin@kubernetes
+Switched to context &quot;kubernetes-admin@kubernetes&quot;.
+[root@liabio cka]# kubectl get pod
+NAME                               READY   STATUS    RESTARTS   AGE
+cka-1128-01-7b8b8cb79-mll6d        1/1     Running   118        32h
+[root@liabio cka]# 
+[root@liabio cka]# 
+[root@liabio cka]# kubectl get node
+NAME     STATUS   ROLES    AGE    VERSION
+liabio   Ready    master   141d   v1.15.2
+[root@liabio cka]# kubectl config use-context coderaction
+Switched to context &quot;coderaction&quot;.
+[root@liabio cka]# kubectl get pod
+Error from server (Forbidden): pods is forbidden: User &quot;system:serviceaccount:cka:cka-1202-sa&quot; cannot list resource &quot;pods&quot; in API group &quot;&quot; in the namespace &quot;default&quot;
+[root@liabio cka]# kubectl get pod -n cka
+No resources found.
+</code></pre>
+<h2 id="analysis">Analysis</h2>
+<p>k8s provides two security steps for accessing API: authentication and authorization. Authentication solves the problem of who the user is, and authorization solves the problem of what the user can do. Through reasonable authority management, it can ensure the security and reliability of the system.</p>
+<p>All operations of k8s cluster are basically carried out through Kube API server, which provides HTTP RESTful API for clients inside and outside the cluster to call. It should be noted that the authentication and authorization process only exists in the API in the form of HTTPS. In other words, if the client uses HTTP to connect to the Kube API server, the authentication and authorization will not be performed. Therefore, it can be set as follows: http is used for communication between components inside the cluster, and HTTPS is used outside the cluster, which not only increases security, but also is not too complex.</p>
+<p>This paper mainly studies authorization: RBAC.</p>
+<p>RBAC official documents: https://kubernetes.io/docs/reference/access-authn-authz/rbac/</p>
+<p>Instructions for creating RoleBinding, Role, and Service Account official websites: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#-em-rolebinding-em-</p>
+<p>Use the kubeconfig file to organize cluster access: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/</p>
+<p>Official command guide for context related operations: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#config</p>
+<p>Role based access control (RBAC) is a method to adjust access to computer or network resources based on the roles of users in the enterprise.</p>
+<p>RBAC uses the rbac.authorization.k8s.io API Group to drive authorization decisions, enabling administrators to dynamically configure policies through the Kubernetes API.</p>
+<p>Starting from 1.8, RBAC mode is stable and supported by rbac.authorization.k8s.io/v1 API.</p>
+<p>To enable RBAC, start apiserver -- authorization mode = RBAC</p>
+<p>The RBAC API declares four top-level types:</p>
+<p>Role and ClusterRole<br>
+In the RBAC API, a Role contains rules that represent a set of permissions. Permissions are purely cumulative (no &quot;deny&quot; rule). You can use Role in namespace or ClusterRole in cluster scope.</p>
+<p>Role can only be used to grant access to resources within a single namespace.</p>
+<p>Clusterroles because they are cluster wide, they can also be used to grant the following permissions:</p>
+<p>Cluster wide resources (such as nodes)<br>
+Non resource endpoint (for example &quot;/ health Hz&quot;)<br>
+namespace resources (such as pod) in all namespaces<br>
+RoleBinding and ClusterRoleBinding<br>
+RoleBinding grants permissions defined in Role to one or a Group of users. It contains subjects (User, Group, or Service Account) and references to the granted roles. You can use RoleBinding in namespace or ClusterRoleBinding in cluster scope.</p>
+<p>Role binding can refer to roles under the same namespace.</p>
+<p>roleRef is how the binding is actually created. The kind can be Role or ClusterRole, and name will refer to the Role or ClusterRole with specific name</p>
+<p>ClusterRoleBinding can grant permissions at the cluster level and in all namespace s.</p>
+<p>Create Role command:</p>
+<pre><code class="language-shell">kubectl create role NAME --verb=verb --resource=resource.group/subresource [--resource-name=resourcename] [--dry-run]
+</code></pre>
+<p>--verb specifies the collection of operation actions for resources, including get, delete, update, create, patch, watch, and list. All operation actions are* --Resource specifies the set of actionable resource types; --Resource name specifies the set of actionable resource names; Such as:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl create role pod-reader-cka -n cka  --verb=get --verb=list --resource=pods --resource-name=readablepod --resource-name=anotherpod -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: &quot;2019-12-03T03:50:34Z&quot;
+  name: pod-reader-cka
+  namespace: cka
+  resourceVersion: &quot;15179947&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/roles/pod-reader-cka
+  uid: 16742721-4890-43de-9725-d6c721c6e4cf
+rules:
+- apiGroups:
+  - &quot;&quot;
+  resourceNames:
+  - readablepod
+  - anotherpod
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+</code></pre>
+<p>Create RoleBinding</p>
+<pre><code class="language-shell">kubectl create rolebinding NAME --clusterrole=NAME|--role=NAME [--user=username] [--group=groupname] [--serviceaccount=namespace:serviceaccountname] [--dry-run]
+</code></pre>
+<p>--Role specifies the role name in roleRef of RoleBinding; --ClusterRole specifies the ClusterRole name in roleRef of RoleBinding; --serviceaccount specifies the subjects collection of RoleBinding; --User specifies the name of user under subjects of RoleBinding; Such as:</p>
+<pre><code class="language-shell">[root@liabio ~]# kubectl create rolebinding admin-cka -n cka --clusterrole=admin --user=user1 --user=user2 --group=group1 -oyaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: &quot;2019-12-03T03:47:55Z&quot;
+  name: admin-cka
+  namespace: cka
+  resourceVersion: &quot;15179732&quot;
+  selfLink: /apis/rbac.authorization.k8s.io/v1/namespaces/cka/rolebindings/admin-cka
+  uid: 4d4eacfb-3ba0-4fa1-96c3-c624fbafb12c
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: user1
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: user2
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: group1
+</code></pre>
+<p>Create ServiceAccount<br>
+kubectl create serviceaccount NAME [--dry-run]<br>
+Such as:</p>
+<pre><code class="language-shell">[root@liabio cka]# kubectl create serviceaccount cka-1202-sa -n cka  -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: &quot;2019-12-02T23:37:42Z&quot;
+  name: cka-1202-sa
+  namespace: cka
+  resourceVersion: &quot;15159020&quot;
+  selfLink: /api/v1/namespaces/cka/serviceaccounts/cka-1202-sa
+  uid: 6764e90c-cb28-4de1-9109-6e3d56941fcb
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/VgFkcO-8l/" class="tag">
+                    Kubernetes
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/play-with-openshift-4-add-admin-user/">
+                  <h3 class="post-title">
+                    Play with Openshift 4 -- add admin user
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
