@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day 11 | analysis and example exercise of kubectl&#39;s common commands of the most complete kubernetes | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1588547990944">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Question
+Create two deployment names: cka-1203-01 and cka-1203-02; Add label: CKA: cka-1203-01 to Pod of cka-1203-01; Po..." />
+    <meta name="keywords" content="Kubernetes" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1588547990944" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day 11 | analysis and example exercise of kubectl&#39;s common commands of the most complete kubernetes</h2>
+            <div class="post-date">2020-05-02</div>
+            
+              <div class="feature-container" style="background-image: url('https://images.unsplash.com/photo-1588406659226-10136bc2a889?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=2251&amp;q=80')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="question">Question</h2>
+<p>Create two deployment names: cka-1203-01 and cka-1203-02; Add label: CKA: cka-1203-01 to Pod of cka-1203-01; Pod of cka-1203-02 plus label: CKA: cka-1203-02;</p>
+<p>Please use the kubectl command label selector to find out the two deployment s and sort them according to the creation time.</p>
+<p>For example:</p>
+<p>NAME          READY   UP-TO-DATE   AVAILABLE   AGE<br>
+cka-1203-01   1/1     1            1           8m40s<br>
+cka-1203-02   1/1     1            1           8m38</p>
+<h2 id="answer">Answer</h2>
+<p>The following operations are carried out in k8s v1.15.2</p>
+<p>To create a deployment with labels:</p>
+<pre><code class="language-bash">[root@liabio cka]#  kubectl run cka-1203-01   --image=nginx --labels=&quot;cka=cka-1203-01&quot;
+deployment.apps/cka-1203-01 created
+
+[root@liabio cka]#  kubectl run cka-1203-02   --image=nginx --labels=&quot;cka=cka-1203-02&quot;
+deployment.apps/cka-1203-02 created
+</code></pre>
+<p>Query the deploy ment of labels with key cka, and sort by time.</p>
+<pre><code class="language-bash">[root@liabio cka]# kubectl get deploy --selector=cka --sort-by=.metadata.creationTimestamp
+NAME          READY   UP-TO-DATE   AVAILABLE   AGE
+cka-1203-01   1/1     1            1           4m24s
+cka-1203-02   1/1     1            1           4m4s
+</code></pre>
+<h2 id="analysis">Analysis</h2>
+<p>kubectl get command reference on the official website: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#get</p>
+<pre><code class="language-bash"> get [(-o|--output=)json|yaml|wide|custom-columns=...|custom-columns-file=...|go-template=...|go-template-file=...|jsonpath=...|jsonpath-file=...] (TYPE[.VERSION][.GROUP] [NAME | -l label] | TYPE[.VERSION][.GROUP]/NAME ...) [flags]
+</code></pre>
+<p>--All namespaces: if specified, lists all objects in the namespace. Even if -- namespace and -- all namespaces are specified at the same time, - namespace is ignored. The default value is false, abbreviated to - A, for example: kubectl get Pod - A;</p>
+<p>--Field selector: the selector to be filtered (field query). Supports' = ',' = = 'and'! = '(for example -- field selector key1 = value1, key2 = Value2). The server supports only a limited number of field queries of each type.</p>
+<p>--Include uninitialized: if true, the kubectl command applies to uninitialized objects. If set to false, this flag overrides other flags that cause the kubectl command to apply to uninitialized objects, such as' - all '. metadata.initializers for metadata is null and is considered initialized. Default is false</p>
+<p>--Label columns: accepts a comma separated list of labels that will be displayed as columns. Names are case sensitive. You can also use multiple flag options, short for - L, such as - L label1 -L label2</p>
+<pre><code>[root@liabio ~]# kubectl get deploy -L A=A -L b=b
+NAME              READY   UP-TO-DATE   AVAILABLE   AGE     A=A   B=B
+cka-1203-01       1/1     1            1           7h22m
+</code></pre>
+<p>--No headers: when using the default or custom column output format, the title will not be printed (the default print title). Default false</p>
+<pre><code>[root@liabio ~]# kubectl get deployments. --no-headers 
+cka-1203-01       1/1   1     1     7h23m
+</code></pre>
+<p>--Output: short for - o, output format. One of the following: JSON | yaml | wide | name | custom columns =... | custom columns file =... | go template =... | go template file =... | jsonpath =... | jsonpath file = See custom columns http://kubernetes.io/docs/user-guide/kubectl-overview/#custom-columns golang template: http://golang.org/pkg/text/template/#pkg-overview And jsonpath templates: http://kubernetes.io/docs/user-guide/jsonpath</p>
+<p>--Selector: abbreviated to - l label selector (label query) for filtering. It supports' = ',' = ', and'! = '. For example: - l key1=value1,key2=value2. If only key is written, the list of keys in all labels will be listed. If - l=cka, cka=cka-1203-01 and cka=cka-1203-02 will be returned</p>
+<p>--Show kind: if it exists, the resource type of the requested object will be listed. The default is false;</p>
+<pre><code>[root@liabio ~]# kubectl get deployments. --show-kind
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.extensions/cka-1203-01       1/1     1            1           7h30m
+</code></pre>
+<p>--Show labels: the default is false. When printing, all labels will be displayed as the last column (the default is hidden label column)</p>
+<pre><code>[root@liabio ~]# kubectl get deployments.  -l=cka --show-labels 
+NAME          READY   UP-TO-DATE   AVAILABLE   AGE     LABELS
+cka-1203-01   1/1     1            1           7h34m   cka=cka-1203-01
+cka-1203-02   1/1     1            1           7h34m   cka=cka-1203-02
+</code></pre>
+<p>--Sort by: if the parameter is not empty, use this field specification to sort the list. The field specification is represented as a JSONPath expression (for example '{. metadata.name}'). The fields in the API resource specified by this JSONPath expression must be integers or strings.</p>
+<p>--watch: short for - w, default is false. After the requested object is listed / obtained, it will be printed when listening for changes. If no object name is specified, uninitialized objects are excluded.</p>
+<p>--Watch only: the default is false, which monitors changes to the requested object without first listing / get at the beginning.</p>
+<h2 id="example">Example</h2>
+<ol>
+<li>Query the deploy ment with labels a=a and b=b:</li>
+</ol>
+<pre><code>[root@liabio cka]#  kubectl run cka-1203-03   --image=nginx --labels=&quot;a=a,b=b&quot;
+deployment.apps/cka-1203-03 created
+
+[root@liabio cka]# kubectl get deploy --selector=a=a,b=b
+NAME          READY   UP-TO-DATE   AVAILABLE   AGE
+cka-1203-03   1/1     1            1           18s
+</code></pre>
+<ol start="2">
+<li>List all PVs in the environment and sort them by name field (using kubectl's own sorting function), list all PVs in the environment and sort them by capacity field</li>
+</ol>
+<pre><code>kubectl get pv --sort-by=.metadata.name
+kubectl get pv --sort-by=.spec.capacity.storage
+</code></pre>
+<ol start="3">
+<li>Lists the number of node s without a label. Pay attention not to add title display</li>
+</ol>
+<pre><code>kubectl get nodes --selector=role!=staging --no-headers | wc -l 
+</code></pre>
+<ol start="4">
+<li>List the names of all pod s represented by a service under a namepsace.</li>
+</ol>
+<p>Notice that it's just the name. First kubectl get service to see what the label is, then kubectl get pod -l to see the following names, and then the names that need to be kept are kubectl get pods &quot;-o=custom-columns=NAME:.metadata.name&quot;</p>
+<pre><code># Get label
+kubectl get svc -o wide
+[root@liabio ~]# kubectl get svc -o wide
+NAME              TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)           AGE     SELECTOR
+solo              ClusterIP   10.99.151.11     &lt;none&gt;        8080/TCP          48d     name=solo
+[root@liabio ~]# kubectl get pods -l name=solo -o name
+pod/solo-57944994c5-zs5cw
+</code></pre>
+<ol start="5">
+<li>Please customize the column output to output only namespace and pod names.</li>
+</ol>
+<pre><code>kubectl get pods  -o custom-columns=NAME:.metadata.name,NAMESPACE:.metadata.namespace
+</code></pre>
+<p>Using custom columns file</p>
+<pre><code>[root@liabio cka]# cat tmp.txt 
+NAME          NAMESPACE
+metadata.name metadata.namespace
+[root@liabio cka]# kubectl get pods  -o custom-columns-file=tmp.txt
+NAME                               NAMESPACE
+cka-1203-01-849574cf7-b8dtc        default
+cka-1203-02-77585c9945-vmb2h       default
+cka-1203-03-587d78ccdb-l8n5x       default
+</code></pre>
+<p>For more examples, please refer to the official website kubectl command example document: https://kubernetes.io/docs/reference/kubectl/cheatsheet/</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/VgFkcO-8l/" class="tag">
+                    Kubernetes
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-10-or-k8s-access-control-rbac-role-rolebinding-and-leads-to-kubectl-common-commands/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day 10 | k8s access control RBAC, Role, RoleBinding, and leads to kubectl common commands
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>
