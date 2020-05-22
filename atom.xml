@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-05-22T02:52:37.844Z</updated>
+    <updated>2020-05-22T02:52:51.408Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -11,11 +11,11 @@
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
     <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day | 12 Static Pod creation method, Pod domain name analysis test real questions]]></title>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day 12 | Static Pod creation method, Pod domain name analysis test real questions]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-or-day-12-static-pod-creation-method-pod-domain-name-analysis-test-real-questions/</id>
         <link href="https://jiaming-hu.com/post/kubernetes-questions-or-day-12-static-pod-creation-method-pod-domain-name-analysis-test-real-questions/">
         </link>
-        <updated>2020-05-21T02:31:37.000Z</updated>
+        <updated>2020-05-20T14:31:37.000Z</updated>
         <content type="html"><![CDATA[<h2 id="questions">Questions</h2>
 <pre><code class="language-sh">Set configuration context $ kubectl config use-context wk8s
 
