@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Kubernetes Questions -- Day | 12 Static Pod creation method, Pod domain name analysis test real questions | Jiaming&#39;s Blog</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.12.0/css/all.min.css">
+<link rel="shortcut icon" href="https://jiaming-hu.com/favicon.ico?v=1590115955396">
+<link rel="stylesheet" href="https://jiaming-hu.com/styles/main.css">
+
+
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+
+
+    <meta name="description" content="Questions
+Set configuration context $ kubectl config use-context wk8s
+
+configure the kubelet systemed managed service, o..." />
+    <meta name="keywords" content="Kubernetes" />
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://jiaming-hu.com">
+        <img src="https://jiaming-hu.com/images/avatar.png?v=1590115955396" class="site-logo">
+        <h1 class="site-title">Jiaming&#39;s Blog</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            Main
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            Archives
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            Tags
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      Why’s THE Design
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/getgridea/gridea" target="_blank">Gridea</a> | <a class="rss" href="https://jiaming-hu.com/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Kubernetes Questions -- Day | 12 Static Pod creation method, Pod domain name analysis test real questions</h2>
+            <div class="post-date">2020-05-20</div>
+            
+              <div class="feature-container" style="background-image: url('https://images.unsplash.com/photo-1589936811946-3f8587143999?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=2250&amp;q=80')">
+              </div>
+            
+            <div class="post-content" v-pre>
+              <h2 id="questions">Questions</h2>
+<pre><code class="language-sh">Set configuration context $ kubectl config use-context wk8s
+
+configure the kubelet systemed managed service, on the node labelled with name=wk8s-node-1,to launch a pod containing a single container of image nginx named myservice automatically.
+
+Any spec file requried should be placed in the /etc/kuberneteds/mainfests directory on the node
+
+Hints:
+
+You can ssh to the failed node using $ ssh wk8s-node-0
+
+You can assume elevated privileges on the node with the following command $ sudo -i
+</code></pre>
+<h2 id="answer">Answer</h2>
+<p>Switch to wk8s context:</p>
+<pre><code>kubectl config use-context wk8s
+</code></pre>
+<p>View node information with labelname = wk8s-node-1</p>
+<pre><code>kubectl get nodes -l name = wk8s-node-1 -o wide
+</code></pre>
+<p>Log in to the specified machine and obtain operation authority.</p>
+<pre><code>ssh wk8s-node-0
+sudo -i
+</code></pre>
+<p>View kubelet service startup parameters --config</p>
+<pre><code>systemctl status kubelet -l
+</code></pre>
+<p>In the file specified by --config, find the staticPodPath file directory</p>
+<pre><code># cat /var/lib/kubelet/config.yaml|grep staticPodPath
+staticPodPath: /etc/kubernetes/manifests
+</code></pre>
+<p>Create yaml in the static pod directory, use the following command to generate myservice.yaml that meets the requirements, and wait for the kubelet to automatically pull up the static pod</p>
+<pre><code>kubectl run myservice --image = nginx --generator = run-pod / v1 --dry-run -o yaml&gt; myservice.yaml
+</code></pre>
+<h2 id="anlysis">Anlysis</h2>
+<p>Official command guide for context-related operations: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#config</p>
+<p>Create static Pods official website description: https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/</p>
+<p>This question mainly examines the configuration of kubelet and the creation of Static Pod.</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://jiaming-hu.com/tag/VgFkcO-8l/" class="tag">
+                    Kubernetes
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">next</div>
+                <a href="https://jiaming-hu.com/post/kubernetes-questions-day-12-or-analysis-and-example-exercise-of-kubectls-common-commands-of-the-most-complete-kubernetes/">
+                  <h3 class="post-title">
+                    Kubernetes Questions -- Day 11 | analysis and example exercise of kubectl&#39;s common commands of the most complete kubernetes
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.min.js"></script>
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+
+
+  </body>
+</html>

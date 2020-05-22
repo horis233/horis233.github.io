@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://jiaming-hu.com</id>
     <title>Jiaming&apos;s Blog</title>
-    <updated>2020-05-19T15:32:01.431Z</updated>
+    <updated>2020-05-22T02:52:37.844Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://jiaming-hu.com"/>
     <link rel="self" href="https://jiaming-hu.com/atom.xml"/>
@@ -10,6 +10,52 @@
     <logo>https://jiaming-hu.com/images/avatar.png</logo>
     <icon>https://jiaming-hu.com/favicon.ico</icon>
     <rights>All rights reserved 2020, Jiaming&apos;s Blog</rights>
+    <entry>
+        <title type="html"><![CDATA[Kubernetes Questions -- Day | 12 Static Pod creation method, Pod domain name analysis test real questions]]></title>
+        <id>https://jiaming-hu.com/post/kubernetes-questions-or-day-12-static-pod-creation-method-pod-domain-name-analysis-test-real-questions/</id>
+        <link href="https://jiaming-hu.com/post/kubernetes-questions-or-day-12-static-pod-creation-method-pod-domain-name-analysis-test-real-questions/">
+        </link>
+        <updated>2020-05-21T02:31:37.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="questions">Questions</h2>
+<pre><code class="language-sh">Set configuration context $ kubectl config use-context wk8s
+
+configure the kubelet systemed managed service, on the node labelled with name=wk8s-node-1,to launch a pod containing a single container of image nginx named myservice automatically.
+
+Any spec file requried should be placed in the /etc/kuberneteds/mainfests directory on the node
+
+Hints:
+
+You can ssh to the failed node using $ ssh wk8s-node-0
+
+You can assume elevated privileges on the node with the following command $ sudo -i
+</code></pre>
+<h2 id="answer">Answer</h2>
+<p>Switch to wk8s context:</p>
+<pre><code>kubectl config use-context wk8s
+</code></pre>
+<p>View node information with labelname = wk8s-node-1</p>
+<pre><code>kubectl get nodes -l name = wk8s-node-1 -o wide
+</code></pre>
+<p>Log in to the specified machine and obtain operation authority.</p>
+<pre><code>ssh wk8s-node-0
+sudo -i
+</code></pre>
+<p>View kubelet service startup parameters --config</p>
+<pre><code>systemctl status kubelet -l
+</code></pre>
+<p>In the file specified by --config, find the staticPodPath file directory</p>
+<pre><code># cat /var/lib/kubelet/config.yaml|grep staticPodPath
+staticPodPath: /etc/kubernetes/manifests
+</code></pre>
+<p>Create yaml in the static pod directory, use the following command to generate myservice.yaml that meets the requirements, and wait for the kubelet to automatically pull up the static pod</p>
+<pre><code>kubectl run myservice --image = nginx --generator = run-pod / v1 --dry-run -o yaml&gt; myservice.yaml
+</code></pre>
+<h2 id="anlysis">Anlysis</h2>
+<p>Official command guide for context-related operations: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands#config</p>
+<p>Create static Pods official website description: https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/</p>
+<p>This question mainly examines the configuration of kubelet and the creation of Static Pod.</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Kubernetes Questions -- Day 11 | analysis and example exercise of kubectl's common commands of the most complete kubernetes]]></title>
         <id>https://jiaming-hu.com/post/kubernetes-questions-day-12-or-analysis-and-example-exercise-of-kubectls-common-commands-of-the-most-complete-kubernetes/</id>
@@ -1190,95 +1236,6 @@ strategy:
 <p><code>maxUnavaible</code> controls the maximum percentage of unavailable copies in DESIRED during the rolling update process. maxUnavailable can be a specific integer or 100%, rounded down. The default value is 25%.</p>
 <p>For example, DESIRED is 10, then the number of available copies must be at least 10-roundDown (10 * 25%) = 8, so AVAILABLE is 8.</p>
 <p><code>The larger maxSurge, the more new copies created initially; the larger maxUnavailable, the more old copies originally destroyed.</code></p>
-]]></content>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Kubernetes Questions -- Day5 | Advanced scheduling of kube-scheduler scheduler: affinity anti-affinity scheduling, deployment upgrade rollback]]></title>
-        <id>https://jiaming-hu.com/post/kubernetes-questions-day5/</id>
-        <link href="https://jiaming-hu.com/post/kubernetes-questions-day5/">
-        </link>
-        <updated>2020-04-09T12:27:36.000Z</updated>
-        <content type="html"><![CDATA[<h2 id="question">Question</h2>
-<p>By using the command line, create two deployments.</p>
-<p>There are 2 nodes in the cluster:</p>
-<p>The first deployment name is cka-1122-01, using nginx image, there are 2 pods, and configure the deployment itself to anti-affinity at the node level between pods;</p>
-<p>The second deployment name is cka-1122-02, using the nginx image, there are 2 pods, and configure the deployment pod have affinity with the first deployment pod at the node level;</p>
-<h2 id="answer">Answer</h2>
-<ul>
-<li>The first deployment: cka-1122-01</li>
-</ul>
-<pre><code>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: cka-1122-01
-  name: cka-1122-01
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: cka-1122-01
-  template:
-    metadata:
-      labels:
-        app: cka-1122-01
-    spec:
-      containers:
-      - image: nginx
-        name: cka-1122-01  
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - cka-1122-01
-              topologyKey: &quot;kubernetes.io/hostname&quot;
-</code></pre>
-<ul>
-<li>The second deployment: cka-1122-02</li>
-</ul>
-<pre><code>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: cka-1122-02
-  name: cka-1122-02
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: cka-1122-02
-  template:
-    metadata:
-      labels:
-        app: cka-1122-02
-    spec:
-      containers:
-      - image: nginx
-        name: cka-1122-02
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - cka-1122-01
-            topologyKey: &quot;kubernetes.io/hostname&quot;
-</code></pre>
-<p>The schedule result:</p>
-<pre><code>NAME                           READY     STATUS    RESTARTS   AGE       IP           NODE
-cka-1122-01-5df9bdf8c9-qwd2v    1/1      Running      0       8m     10.192.4.2     node-1
-cka-1122-01-5df9bdf8c9-r4rhs    1/1      Running      0       8m     10.192.4.3     node-2  
-cka-1122-02-749cd4b846-bjhzq    1/1      Running      0       10m    10.192.4.4     node-1
-cka-1122-02-749cd4b846-rkgpo    1/1      Running      0       10m    10.192.4.5     node-2  
-</code></pre>
-<p>Affinity and Anti-Affinity document:<br>
-https://kubernetes.io/docs/concepts/configuration/assign-pod-node/</p>
 ]]></content>
     </entry>
 </feed>
